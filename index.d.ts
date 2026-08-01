@@ -1,4 +1,4 @@
-// import type { HastVisitorContext } from "satteri";
+import type { HastPluginDefinition } from "satteri";
 import type { Element, Parents } from "hast";
 
 export interface tagHasProperty {
@@ -36,3 +36,5 @@ export interface Data {
   rootNode: Readonly<Parents> | undefined;
   nodeStr: string;
 }
+
+export declare function prettyToc(options?: HastOption): HastPluginDefinition;

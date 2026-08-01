@@ -1,14 +1,50 @@
 import { defineHastPlugin } from "satteri";
 import slug from "slug";
 
-const prettyToc = (opt) =>
-  defineHastPlugin({
+function prettyToc(option) {
+  return defineHastPlugin({
     name: "prettyToc",
     element: [
       {
         filter: ["h1", "h2", "h3", "h4", "h5", "h6"],
         // ctx: { data: Data } & HastVisitorContext
         visit(node, ctx) {
+          const opt = option ?? {
+            title: "Table of Contents",
+            listStyle: "decimal", // disc, circle, decimal, none...
+            lightThemeHighlightColor: "oklch(0.75 0.1229 12.71)",
+            darkThemeHighlightColor: "oklch(0.81 0.1004 305.04)",
+            class: {
+              summary: "",
+              ul: "",
+              li: "",
+              a: "",
+            },
+            globalStyle: "",
+            style: {
+              summary: "",
+              ul: "",
+              li: "",
+              a: "",
+            },
+            locale: "zh-CN",
+            languageMap: {
+              "de-DE": "Inhaltsverzeichnis",
+              "el-GR": "Περιεχόμενα",
+              "en-US": "Contents",
+              "es-ES": "Índice",
+              "fr-FR": "Sommaire",
+              "it-IT": "Indice",
+              "ja-JP": "目次",
+              "ko-KR": "목차",
+              "ru-RU": "Оглавление",
+              "th-TH": "สารบัญ",
+              "tr-TR": "İçindekiler",
+              "zh-CN": "目录",
+              "zh-Hant": "目錄",
+            },
+          };
+
           try {
             const defaultTitle = "Table of Contents";
             const depth = parseInt(node.tagName.slice(-1), 10);
@@ -33,6 +69,12 @@ const prettyToc = (opt) =>
                 summary {
                   font-size: 1.25rem;
                   margin-bottom: 0.5rem;
+                }
+                summary:hover {
+                  color: ${lightThemeHighlightColor};
+                }
+                html.dark summary:hover {
+                  color: ${darkThemeHighlightColor};
                 }
                 ul {
                   padding-left: 0;
@@ -125,7 +167,7 @@ const prettyToc = (opt) =>
                       content: counters(toc-counter, ".");
                     }`
                   : "")
-                }</style><details><summary data-satteri-toc-title="${opt.languageMap?.[opt.locale ?? defaultTitle] ?? defaultTitle}" class="${opt.class?.summary ?? ""}" style="${opt.style?.summary ?? ""}">${opt.languageMap?.[opt.locale ?? "en-US"] ?? defaultTitle}</summary><ul class="${opt.class?.ul ?? ""}" style="${opt.style?.ul ?? ""}">${nodeStr}</ul>${scriptContent}</details>`;
+                }</style><details><summary data-satteri-toc-title="${opt.languageMap?.[opt.locale ?? "en-US"] ?? defaultTitle}" class="${opt.class?.summary ?? ""}" style="${opt.style?.summary ?? ""}">${opt.languageMap?.[opt.locale ?? "en-US"] ?? defaultTitle}</summary><ul class="${opt.class?.ul ?? ""}" style="${opt.style?.ul ?? ""}">${nodeStr}</ul>${scriptContent}</details>`;
             } else {
               const indexA = ctx.data.nodeStr?.lastIndexOf(
                 `<span data-depth='${depth}' style="display: none;"></span>`,
@@ -202,5 +244,6 @@ const prettyToc = (opt) =>
       },
     ],
   });
+}
 
 export default prettyToc;
