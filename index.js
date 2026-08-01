@@ -1,8 +1,9 @@
+import { defineHastPlugin } from "satteri";
 import slug from "slug";
 
 const prettyToc = (opt) =>
   defineHastPlugin({
-    name: "hastPlugin",
+    name: "prettyToc",
     element: [
       {
         filter: ["h1", "h2", "h3", "h4", "h5", "h6"],
