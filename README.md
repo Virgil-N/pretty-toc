@@ -10,6 +10,10 @@ npm install pretty-toc
 
 ```javascript
 import prettyToc from 'pretty-toc'
+
+satteri({
+  hastPlugins: [prettyToc({title: "Table of Contents", listStyle: "decimal"})]
+})
 ```
 
 ## options
