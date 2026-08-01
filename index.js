@@ -1,6 +1,6 @@
 import slug from "slug";
 
-const hastPlugin = (opt) =>
+const prettyToc = (opt) =>
   defineHastPlugin({
     name: "hastPlugin",
     element: [
@@ -202,4 +202,4 @@ const hastPlugin = (opt) =>
     ],
   });
 
-export default hastPlugin;
+export default prettyToc;
