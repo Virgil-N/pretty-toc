@@ -10,6 +10,10 @@
     "plugin"
   ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Virgil-N/pretty-toc.git"
+  },
   "author": "Virgil",
   "type": "module",
   "main": "index.js",
