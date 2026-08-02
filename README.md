@@ -3,13 +3,13 @@ A Table of Contents generation plugin for the Satteri markdown parser library.
 ## Install
 
 ```
-npm install pretty-toc
+npm install pretty-toc --save-dev
 ```
 
 ## Example
 
 ```javascript
-import prettyToc from 'pretty-toc'
+import prettyToc from 'pretty-toc';
 
 satteri({
   hastPlugins: [prettyToc({title: "Table of Contents", listStyle: "decimal"})]
@@ -29,9 +29,15 @@ processor: satteri({
     prettyToc({
       title: "Table of Contents",
       listStyle: "image", // disc, circle, decimal, none... icon, image...
-      icon: ["🐶", "🦁", "🐷", "🐸", "🐥", "🐞"],
-      image:
-        "http://localhost:4321/src/assets/svg/flags/circle-flags--kr.svg",
+      icon: ["🐶", "🦁", "🐷", "🐸", "🐥", "🐞"], // or just a string, eg. "🐥"
+      image: [
+        "/svg/unjs--automd.svg",
+        "/svg/unjs--hookable.svg",
+        "/svg/unjs--knitwork.svg",
+        "/svg/unjs--mongoz.svg",
+        "/svg/unjs--ofetch.svg",
+        "/svg/unjs--uncrypto.svg",
+      ], // or just a string, eg. "/svg/unjs--automd.svg"
       markerCssSize: "1rem",
       lightThemeHighlightColor: "oklch(0.75 0.1229 12.71)",
       darkThemeHighlightColor: "oklch(0.81 0.1004 305.04)",
