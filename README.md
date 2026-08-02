@@ -25,11 +25,14 @@ processor: satteri({
     directive: true,
     math: true,
   },
-  // mdastPlugins: [mdastPlugin],
   hastPlugins: [
     prettyToc({
       title: "Table of Contents",
-      listStyle: "decimal", // disc, circle, decimal, none...
+      listStyle: "image", // disc, circle, decimal, none... icon, image...
+      icon: ["🐶", "🦁", "🐷", "🐸", "🐥", "🐞"],
+      image:
+        "http://localhost:4321/src/assets/svg/flags/circle-flags--kr.svg",
+      markerCssSize: "1rem",
       lightThemeHighlightColor: "oklch(0.75 0.1229 12.71)",
       darkThemeHighlightColor: "oklch(0.81 0.1004 305.04)",
       class: {
@@ -49,7 +52,7 @@ processor: satteri({
       languageMap: {
         "de-DE": "Inhaltsverzeichnis",
         "el-GR": "Περιεχόμενα",
-        "en-US": "Contents",
+        "en-US": "Table of Contents",
         "es-ES": "Índice",
         "fr-FR": "Sommaire",
         "it-IT": "Indice",
