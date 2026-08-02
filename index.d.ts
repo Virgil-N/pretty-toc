@@ -13,6 +13,12 @@ export interface HastOption {
   title?: string;
   /** 列表形式 */
   listStyle?: string;
+  /** 图标 */
+  icon?: string | string[];
+  /** 图片路径 */
+  image?: string;
+  /** 标记大小 */
+  markerCssSize?: string;
   /** 浅色主题高亮颜色 */
   lightThemeHighlightColor?: string;
   /** 深色主题高亮颜色 */

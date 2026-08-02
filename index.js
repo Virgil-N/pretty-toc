@@ -56,7 +56,28 @@ function prettyToc(option) {
             const darkThemeHighlightColor =
               opt.darkThemeHighlightColor ?? "oklch(0.81 0.1004 305.04)";
 
-            const nodeStr = `<li id="li-${contentSlug}" class="${opt.class?.li ?? ""}" style="${opt.style?.li ?? ""}" data-depth=${depth}><div class="li-row">${opt.listStyle === "decimal" ? "<span class='li-marker'></span>" : ""}<a href="#${contentSlug}" class="${opt.class?.a ?? ""}" style="${opt.style?.a ?? ""}">${content}</a></div><span data-depth='${depth}' style="display: none;"></span></li>`;
+            let marker = "";
+            let icon = "🍎";
+            if (opt.icon && typeof opt.icon === "string") {
+              icon = opt.icon;
+            } else if (Array.isArray(opt.icon)) {
+              icon = opt.icon[depth - 1] ?? "🍎";
+            }
+            switch (opt.listStyle) {
+              case "icon":
+                marker = `<span class='li-marker'>${icon}</span>`;
+                break;
+              case "image":
+                marker = `${opt.image ? `<img class='li-marker' src="${opt.image}" alt='icon' />` : ""}`;
+                break;
+              case "decimal":
+                marker = "<span class='li-marker'></span>";
+                break;
+              default:
+                marker = "";
+            }
+
+            const nodeStr = `<li id="li-${contentSlug}" class="${opt.class?.li ?? ""}" style="${opt.style?.li ?? ""}" data-depth=${depth}><div class="li-row">${marker}<a href="#${contentSlug}" class="${opt.class?.a ?? ""}" style="${opt.style?.a ?? ""}">${content}</a></div><span data-depth='${depth}' style="display: none;"></span></li>`;
 
             ctx.setProperty(node, "id", contentSlug);
 
@@ -78,7 +99,7 @@ function prettyToc(option) {
                 }
                 ul {
                   padding-left: 0;
-                  list-style-type: ${opt.listStyle === "decimal" ? "none" : opt.listStyle} ;
+                  list-style-type: ${(opt.listStyle === "icon" || opt.listStyle === "image" || opt.listStyle === "decimal") ? "none" : opt.listStyle} ;
                   list-style-position: inside;
                 }
                 li {
@@ -89,18 +110,32 @@ function prettyToc(option) {
                   animation: fadeIn 0.1s ease-in; // 防止页面刷新瞬间显示"0 javascript"
                 }
                 .li-marker {
+                  display: inline-block;
                   margin-right: 0.5rem;
+                }
+                img.li-marker {
+                  width: ${opt.markerCssSize ?? "1rem"};
+                  height: ${opt.markerCssSize ?? "1rem"};
+                  margin: 0 0.5rem 0 0;
                 }
                 .li-marker::before {
                   font-size: 1rem;
                   font-weight: 600;
+                  width: ${opt.markerCssSize ?? "1rem"};
+                  height: ${opt.markerCssSize ?? "1rem"};
                 }
                 /* 嵌套的 ul 内部，让缩进变量自动叠加 1rem */
                 ul ul li {
                   --list-indent: calc(var(--list-indent, 1rem) + 1rem);
                 }
                 .li-row {
-                  display: inline-block;
+                  display: inline-flex;
+                  flex-direction: row;
+                  justify-content: flex-start;
+                  align-items: center;
+                }
+                .li-row > img {
+                  margin: 0 0.5rem 0 0;
                 }
                 .li-row:hover {
                   color: ${lightThemeHighlightColor};
