@@ -1,6 +1,6 @@
 {
   "name": "pretty-toc",
-  "version": "1.0.0",
+  "type": "module",
   "description": "A Table of Contents generation plugin for the Satteri markdown parser library.",
   "keywords": [
     "Table of Contents",
@@ -9,29 +9,33 @@
     "markdown",
     "plugin"
   ],
+  "author": "Virgil",
   "license": "MIT",
+  "homepage": "https://github.com/Virgil-N/pretty-toc#readme",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Virgil-N/pretty-toc.git"
   },
-  "author": "Virgil",
-  "type": "module",
-  "main": "index.js",
-  "types": "index.d.ts",
+  "bugs": {
+    "url": "https://github.com/Virgil-N/pretty-toc/issues"
+  },
+  "entry": [
+    "./src/index.ts"
+  ],
   "exports": {
-    ".": {
-      "types": "./index.d.ts",
-      "browser": "./index.js",
-      "import": "./index.js",
-      "default": "./index.js"
-    }
+    ".": "./dist/index.mjs",
+    "./package.json": "./package.json"
   },
   "files": [
-    "index.js",
-    "index.d.ts"
+    "dist"
   ],
   "scripts": {
-    "test": "vitest run"
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "test": "vitest",
+    "typecheck": "tsc --noEmit",
+    "release": "bumpp",
+    "prepublishOnly": "pnpm run build"
   },
   "peerDependencies": {
     "@types/slug": "^5.0.9",
@@ -39,6 +43,12 @@
     "slug": "^12.0.1"
   },
   "devDependencies": {
-    "@types/hast": "^3.0.4"
+    "@rollup/plugin-url": "^8.0.2",
+    "@types/hast": "^3.0.4",
+    "@types/node": "^26.1.1",
+    "bumpp": "^11.1.0",
+    "tsdown": "^0.22.5",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
   }
 }

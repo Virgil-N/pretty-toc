@@ -1,14 +1,16 @@
-import { defineHastPlugin } from "satteri";
+import { defineHastPlugin, type HastVisitorContext, type HastPluginDefinition } from "satteri";
 import slug from "slug";
+import type { Data, HastOption } from "../app";
+import notFoundImg from "./assets/svg/image-not-found.svg";
 
-function prettyToc(option) {
+function prettyToc(option?: HastOption): HastPluginDefinition {
   return defineHastPlugin({
     name: "prettyToc",
     element: [
       {
         filter: ["h1", "h2", "h3", "h4", "h5", "h6"],
         // ctx: { data: Data } & HastVisitorContext
-        visit(node, ctx) {
+        visit(node, ctx: { data: Data } & HastVisitorContext) {
           const opt = option ?? {
             title: "Table of Contents",
             listStyle: "decimal", // disc, circle, decimal, none...
@@ -58,17 +60,26 @@ function prettyToc(option) {
 
             let marker = "";
             let icon = "🍎";
+            let image = notFoundImg;
+
             if (opt.icon && typeof opt.icon === "string") {
               icon = opt.icon;
             } else if (Array.isArray(opt.icon)) {
               icon = opt.icon[depth - 1] ?? "🍎";
             }
+
+            if (opt.image && typeof opt.image === "string") {
+              image = opt.image;
+            } else if (Array.isArray(opt.image)) {
+              image = opt.image[depth - 1] ?? notFoundImg;
+            }
+
             switch (opt.listStyle) {
               case "icon":
                 marker = `<span class='li-marker'>${icon}</span>`;
                 break;
               case "image":
-                marker = `${opt.image ? `<img class='li-marker' src="${opt.image}" alt='icon' />` : ""}`;
+                marker = `<img class='li-marker' src="${image}" alt='icon' />`;
                 break;
               case "decimal":
                 marker = "<span class='li-marker'></span>";
@@ -273,7 +284,7 @@ function prettyToc(option) {
                 }>`,
             });
           } catch (err) {
-            console.log("解析处理节点失败: ", err);
+            throw err;
           }
         },
       },

@@ -1,4 +1,3 @@
-import type { HastPluginDefinition } from "satteri";
 import type { Element, Parents } from "hast";
 
 export interface tagHasProperty {
@@ -16,7 +15,7 @@ export interface HastOption {
   /** 图标 */
   icon?: string | string[];
   /** 图片路径 */
-  image?: string;
+  image?: string | string[];
   /** 标记大小 */
   markerCssSize?: string;
   /** 浅色主题高亮颜色 */
@@ -42,5 +41,3 @@ export interface Data {
   rootNode: Readonly<Parents> | undefined;
   nodeStr: string;
 }
-
-export declare function prettyToc(options?: HastOption): HastPluginDefinition;

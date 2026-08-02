@@ -1,15 +1,4 @@
-.idea/
-.vscode/
-.zed/
-
-# dependencies
-node_modules/
-
-# environment variables
-.env.local
-.env.*.local
-
-# macOS-specific files
+node_modules
+dist
+*.log
 .DS_Store
-
-dist/
