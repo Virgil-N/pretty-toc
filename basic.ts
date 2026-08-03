@@ -1,4 +1,4 @@
-import type { Element, Parents } from "hast";
+import type { Element } from "hast";
 
 export interface tagHasProperty {
   summary?: string;
@@ -38,6 +38,6 @@ export interface Data {
   firstHeading: Readonly<Element>;
   firstHeadingDepth: number;
   firstHeadingId: string;
-  rootNode: Readonly<Parents> | undefined;
+  firstHeadingIndex: number;
   nodeStr: string;
 }

@@ -1,7 +1,8 @@
 import { defineHastPlugin, type HastVisitorContext, type HastPluginDefinition } from "satteri";
-import slug from "slug";
-import type { Data, HastOption } from "../app";
+import { DEFAULT_OPTIONS, DEFAULT_TITLE, DEFALUT_LOCALE } from "./const";
+import type { Data, HastOption } from "../basic";
 import notFoundImg from "./assets/svg/image-not-found.svg";
+import slug from "slug";
 
 function prettyToc(option?: HastOption): HastPluginDefinition {
   return defineHastPlugin({
@@ -9,46 +10,11 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
     element: [
       {
         filter: ["h1", "h2", "h3", "h4", "h5", "h6"],
-        // ctx: { data: Data } & HastVisitorContext
         visit(node, ctx: { data: Data } & HastVisitorContext) {
-          const opt = option ?? {
-            title: "Table of Contents",
-            listStyle: "decimal", // disc, circle, decimal, none...
-            lightThemeHighlightColor: "oklch(0.75 0.1229 12.71)",
-            darkThemeHighlightColor: "oklch(0.81 0.1004 305.04)",
-            class: {
-              summary: "",
-              ul: "",
-              li: "",
-              a: "",
-            },
-            globalStyle: "",
-            style: {
-              summary: "",
-              ul: "",
-              li: "",
-              a: "",
-            },
-            locale: "zh-CN",
-            languageMap: {
-              "de-DE": "Inhaltsverzeichnis",
-              "el-GR": "Περιεχόμενα",
-              "en-US": "Contents",
-              "es-ES": "Índice",
-              "fr-FR": "Sommaire",
-              "it-IT": "Indice",
-              "ja-JP": "目次",
-              "ko-KR": "목차",
-              "ru-RU": "Оглавление",
-              "th-TH": "สารบัญ",
-              "tr-TR": "İçindekiler",
-              "zh-CN": "目录",
-              "zh-Hant": "目錄",
-            },
-          };
+          const opt = option ?? DEFAULT_OPTIONS;
 
           try {
-            const defaultTitle = "Table of Contents";
+            const defaultTitle = DEFAULT_TITLE;
             const depth = parseInt(node.tagName.slice(-1), 10);
             const content = ctx.textContent(node);
             const contentSlug = slug(content) + new Date().getTime();
@@ -92,6 +58,15 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
 
             ctx.setProperty(node, "id", contentSlug);
 
+            // 处理标题不在顶层的情况(比如在一个section标签内)
+            let parent = ctx.parent(node);
+            while (parent.type !== "root" && parent !== undefined) {
+              const p = ctx.parent(parent);
+              if (p) {
+                parent = p;
+              } else break;
+            }
+
             if (ctx.data.nodeStr === undefined) {
               const baseStyle = `
                 @keyframes fadeIn {
@@ -104,6 +79,8 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
                 }
                 summary:hover {
                   color: ${lightThemeHighlightColor};
+                  cursor: pointer;
+                  width: fit-content;
                 }
                 html.dark summary:hover {
                   color: ${darkThemeHighlightColor};
@@ -148,6 +125,9 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
                 .li-row > img {
                   margin: 0 0.5rem 0 0;
                 }
+                .li-row > a {
+                  text-decoration: none;
+                }
                 .li-row:hover {
                   color: ${lightThemeHighlightColor};
                 }
@@ -168,38 +148,48 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
                 }
               `;
 
-              const scriptContent = `<script is:inline data-astro-rerun>
-                // 加上{}块级作用域，防止报错
-                {
-                  const currentLocale = window.location.pathname.split('/')[1] || 'en-US';
-                  const languageMap = ${JSON.stringify(opt.languageMap)};
+              const iframeContent = `<iframe
+              style="display:none;"
+              srcdoc="&lt;!DOCTYPE html&gt;
+                      &lt;html&gt;
+                      &lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;/head&gt;
+                      &lt;body&gt;
+                        <strong>Hello from iframe!</strong>
+                        <script is:inline data-astro-rerun>
+                          console.log('🚀 pretty-toc running...');
+                          const currentLocale = window.parent.location.pathname.split('/')[1] || '${opt.locale || DEFALUT_LOCALE}';
+                          const languageMap = ${JSON.stringify(opt.languageMap).replaceAll('"', "'")};
 
-                  function syncTocTitle(
-                    locale,
-                    languageMap
-                  ) {
-                    const tocSummary = document.querySelector("[data-satteri-toc-title]");
+                          function syncTocTitle(
+                            locale,
+                            languageMap
+                          ) {
+                            const tocSummary = window.parent.document.querySelector('[data-satteri-toc-title]');
 
-                    if (tocSummary) {
-                      const titleKey = tocSummary.getAttribute("data-satteri-toc-title");
-                      const translation =
-                        languageMap[locale] || titleKey || defaultTitle;
-                      tocSummary.textContent = translation;
-                    }
-                  }
+                            if (tocSummary) {
+                              const titleKey = tocSummary.getAttribute('data-satteri-toc-title');
+                              const translation =
+                                languageMap[locale] || titleKey || defaultTitle;
+                              tocSummary.textContent = translation;
+                            }
+                          }
 
-                  syncTocTitle(currentLocale, languageMap);
+                          syncTocTitle(currentLocale, languageMap);
 
-                  window.addEventListener("load", () => {
-                    syncTocTitle(currentLocale, languageMap);
-                  });
-                }
-              </script>`;
+                          window.parent.addEventListener('load', function() {
+                            syncTocTitle(currentLocale, languageMap);
+                          });
+                        </script>
+                      &lt;/body&gt;
+                      &lt;/html&gt;">
+            </iframe>`;
+
               ctx.data.firstHeading = node;
               ctx.data.firstHeadingDepth = depth;
               ctx.data.firstHeadingId = contentSlug;
-              ctx.data.rootNode = ctx.parent(node);
-              ctx.data.nodeStr = `<style>${baseStyle +
+              ctx.data.firstHeadingIndex = ctx.indexOf(node) ?? 0;
+
+              ctx.data.nodeStr = `<details><style>${baseStyle +
                 (opt.globalStyle ?? "") +
                 (opt.listStyle === "decimal"
                   ? `ul{
@@ -213,7 +203,7 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
                       content: counters(toc-counter, ".");
                     }`
                   : "")
-                }</style><details><summary data-satteri-toc-title="${opt.languageMap?.[opt.locale ?? "en-US"] ?? defaultTitle}" class="${opt.class?.summary ?? ""}" style="${opt.style?.summary ?? ""}">${opt.languageMap?.[opt.locale ?? "en-US"] ?? defaultTitle}</summary><ul class="${opt.class?.ul ?? ""}" style="${opt.style?.ul ?? ""}">${nodeStr}</ul>${scriptContent}</details>`;
+                }</style><summary data-satteri-toc-title="${opt.languageMap?.[opt.locale ?? "en-US"] ?? defaultTitle}" class="${opt.class?.summary ?? ""}" style="${opt.style?.summary ?? ""}">${opt.languageMap?.[opt.locale ?? "en-US"] ?? defaultTitle}</summary><ul class="${opt.class?.ul ?? ""}" style="${opt.style?.ul ?? ""}">${nodeStr}</ul>${iframeContent}</details>`;
             } else {
               const indexA = ctx.data.nodeStr?.lastIndexOf(
                 `<span data-depth='${depth}' style="display: none;"></span>`,
@@ -264,25 +254,15 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
               }
             }
 
-            // 处理标题不在顶层的情况(比如在一个section标签内)
-            let parent = ctx.parent(node);
-            while (parent.type !== "root" && parent !== undefined) {
-              const p = ctx.parent(parent);
-              if (p) {
-                parent = p;
-              } else {
-                break;
-              }
-            }
             // 替换toc
-            ctx.replaceNode(parent.children[0], {
-              type: "raw",
-              value:
-                ctx.data.nodeStr +
-                `<h${ctx.data.firstHeadingDepth
-                } id="${ctx.data.firstHeadingId}">${ctx.data.firstHeading && ctx.textContent(ctx.data.firstHeading)}</h${ctx.data.firstHeadingDepth
-                }>`,
-            });
+            if (parent.type === "root") {
+              ctx.replaceNode(parent.children[ctx.data.firstHeadingIndex], {
+                type: "raw",
+                value:
+                  ctx.data.nodeStr +
+                  `<h${ctx.data.firstHeadingDepth} id="${ctx.data.firstHeadingId}">${ctx.data.firstHeading && ctx.textContent(ctx.data.firstHeading)}</h${ctx.data.firstHeadingDepth}>`,
+              });
+            }
           } catch (err) {
             throw err;
           }

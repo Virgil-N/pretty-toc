@@ -54,7 +54,7 @@ processor: satteri({
         li: "",
         a: "",
       },
-      locale: "zh-CN",
+      locale: "zh-CN", // Note: The case of the locale variable should match the locale in your page URL.
       languageMap: {
         "de-DE": "Inhaltsverzeichnis",
         "el-GR": "Περιεχόμενα",

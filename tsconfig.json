@@ -23,7 +23,7 @@
   },
   "include": [
     "src",
-    "app.d.ts",
+    "basic.ts",
     "svg.d.ts"
   ]
 }
