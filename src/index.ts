@@ -54,7 +54,10 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
                 marker = "";
             }
 
-            const nodeStr = `<li id="li-${contentSlug}" class="${opt.class?.li ?? ""}" style="${opt.style?.li ?? ""}" data-depth=${depth}><div class="li-row">${marker}<a href="#${contentSlug}" class="${opt.class?.a ?? ""}" style="${opt.style?.a ?? ""}">${content}</a></div><span data-depth='${depth}' style="display: none;"></span></li>`;
+            const tagSignal = `<span data-depth='${depth}' style="display: none;"></span>`;
+            const tagSignalLength = tagSignal.length;
+
+            const nodeStr = `<li id="li-${contentSlug}" class="${opt.class?.li ?? ""}" style="${opt.style?.li ?? ""}" data-depth=${depth}><div class="li-row">${marker}<a href="#${contentSlug}" class="${opt.class?.a ?? ""}" style="${opt.style?.a ?? ""}">${content}</a></div>${tagSignal}</li>`;
 
             ctx.setProperty(node, "id", contentSlug);
 
@@ -205,14 +208,12 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
                   : "")
                 }</style><summary data-satteri-toc-title="${opt.languageMap?.[opt.locale ?? "en-US"] ?? defaultTitle}" class="${opt.class?.summary ?? ""}" style="${opt.style?.summary ?? ""}">${opt.languageMap?.[opt.locale ?? "en-US"] ?? defaultTitle}</summary><ul class="${opt.class?.ul ?? ""}" style="${opt.style?.ul ?? ""}">${nodeStr}</ul>${iframeContent}</details>`;
             } else {
-              const indexA = ctx.data.nodeStr?.lastIndexOf(
-                `<span data-depth='${depth}' style="display: none;"></span>`,
-              );
+              const indexA = ctx.data.nodeStr?.lastIndexOf(tagSignal);
               if (indexA !== -1) {
                 ctx.data.nodeStr =
-                  ctx.data.nodeStr?.slice(0, indexA + 56) +
+                  ctx.data.nodeStr?.slice(0, indexA + tagSignalLength + 5) +
                   nodeStr +
-                  ctx.data.nodeStr?.slice(indexA + 56);
+                  ctx.data.nodeStr?.slice(indexA + tagSignalLength + 5);
               } else {
                 if (depth > 1) {
                   let indexB = -1;
