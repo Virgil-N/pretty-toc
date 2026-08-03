@@ -11,20 +11,13 @@ npm install pretty-toc --save-dev
 ```javascript
 import prettyToc from 'pretty-toc';
 
+// example
 satteri({
   hastPlugins: [prettyToc({title: "Table of Contents", listStyle: "decimal"})]
 })
-```
 
-## options
-
-```javascript
-// config file
+// Full example
 processor: satteri({
-  features: {
-    directive: true,
-    math: true,
-  },
   hastPlugins: [
     prettyToc({
       title: "Table of Contents",
@@ -74,3 +67,20 @@ processor: satteri({
   ],
 }),
 ```
+
+## options
+
+|Property‌|Type|Info|
+|:---|:---|:---|
+|title|string|-|
+|listStyle|string|eg. disc, circle, decimal, none... or icon and image|
+|icon|string or string[]|-|
+|image|string or string[]|-|
+|markerCssSize|string|CSS property value|
+|lightThemeHighlightColor|string|eg. "oklch(0.75 0.1229 12.71)"|
+|darkThemeHighlightColor|string|eg. "oklch(0.81 0.1004 305.04)"|
+|class|{summary?: string, ul?: string, li?: string, a?: string}|eg. {summary: "pb-2", li: "py-1"}|
+|globalStyle|string|-|
+|style|Object{summary?: string, ul?: string, li?: string, a?: string}||
+|locale|string|eg. "zh-CN" // **Note: The case of the locale variable should match the locale in your page URL.**|
+|languageMap|Record<string, string>|eg. {"en-US": "Table of Contents", "ja-JP": "目次"}|
