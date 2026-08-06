@@ -1,5 +1,18 @@
 import { defineHastPlugin, type HastVisitorContext, type HastPluginDefinition } from "satteri";
-import { DEFAULT_OPTIONS, DEFAULT_TITLE, DEFALUT_LOCALE } from "./const";
+import {
+  DEFAULT_OPTIONS,
+  DEFAULT_TITLE,
+  DEFAULT_OPENED_TITLE_MARKER,
+  DEFAULT_CLOSED_TITLE_MARKER,
+  DEFAULT_TITLE_MARKER_CSS_SIZE,
+  DEFAULT_LI_MARKER_CSS_SIZE,
+  DEFALUT_LOCALE,
+  DEFAULT_ANIMATION,
+  DEFAULT_LIGHT_THEME_HIGHLIGHT_COLOR,
+  DEFAULT_DARK_THEME_HIGHLIGHT_COLOR,
+  DEFAULT_LANGUAGE_MAP,
+  DEFAULT_LIST_STYLE
+} from "./const";
 import type { Data, HastOption } from "../basic";
 import notFoundImg from "./assets/svg/image-not-found.svg";
 import slug from "slug";
@@ -14,15 +27,44 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
           const opt = option ?? DEFAULT_OPTIONS;
 
           try {
-            const defaultTitle = DEFAULT_TITLE;
             const depth = parseInt(node.tagName.slice(-1), 10);
             const content = ctx.textContent(node);
             const contentSlug = slug(content) + new Date().getTime();
 
+            let title = opt.title || DEFAULT_TITLE
+
+            if (opt.languageMap) {
+              title = opt.languageMap[opt.locale ?? DEFALUT_LOCALE] || DEFAULT_TITLE;
+            } else {
+              title = DEFAULT_LANGUAGE_MAP[opt.locale ?? DEFALUT_LOCALE] || DEFAULT_TITLE;
+            }
+
+            let listStyle = DEFAULT_LIST_STYLE;
+
+            if (opt.listStyle === "icon" || opt.listStyle === "image" || opt.listStyle === "decimal") {
+              listStyle = "none";
+            } else if (opt.listStyle !== undefined) {
+              listStyle = opt.listStyle;
+            }
+
             const lightThemeHighlightColor =
-              opt.lightThemeHighlightColor ?? "oklch(0.75 0.1229 12.71)";
+              opt.lightThemeHighlightColor || DEFAULT_LIGHT_THEME_HIGHLIGHT_COLOR;
             const darkThemeHighlightColor =
-              opt.darkThemeHighlightColor ?? "oklch(0.81 0.1004 305.04)";
+              opt.darkThemeHighlightColor || DEFAULT_DARK_THEME_HIGHLIGHT_COLOR;
+            const titleMarkerCssSize = opt.titleMarkerCssSize || DEFAULT_TITLE_MARKER_CSS_SIZE;
+            const openedMarker = opt.openedMarker || DEFAULT_OPENED_TITLE_MARKER;
+            const closedMarker = opt.closedMarker || DEFAULT_CLOSED_TITLE_MARKER;
+            const liMarkerCssSize = opt.liMarkerCssSize || DEFAULT_LI_MARKER_CSS_SIZE;
+
+            let animation = undefined;
+
+            if (typeof opt.animation === "object" && opt.animation !== undefined) {
+              animation = opt.animation ?? DEFAULT_ANIMATION;
+            } else if (opt.animation === true) {
+              animation = DEFAULT_ANIMATION;
+            } else {
+              animation = undefined;
+            }
 
             let marker = "";
             let icon = "🍎";
@@ -72,48 +114,61 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
 
             if (ctx.data.nodeStr === undefined) {
               const baseStyle = `
-                @keyframes fadeIn {
-                  from { opacity: 0; }
-                  to { opacity: 1; }
+                .toc-wrapper {
+                  display: grid;
+                  grid-template-rows: 0fr;
+                  overflow: hidden;
                 }
-                summary {
-                  font-size: 1.25rem;
-                  margin-bottom: 0.5rem;
+                .toc-wrapper:has(.toc-title.open) {
+                  grid-template-rows: 1fr;
                 }
-                summary:hover {
+                .toc-title {
+                  font-size: 1.2rem;
+                  font-weight: 600;
+                  margin: 0 0 0.5rem 0;
+                  width: fit-content;
+                  position: relative;
+                }
+                .toc-title:hover {
                   color: ${lightThemeHighlightColor};
                   cursor: pointer;
-                  width: fit-content;
                 }
-                html.dark summary:hover {
+                html.dark .toc-title:hover {
                   color: ${darkThemeHighlightColor};
                 }
                 ul {
                   padding-left: 0;
-                  list-style-type: ${(opt.listStyle === "icon" || opt.listStyle === "image" || opt.listStyle === "decimal") ? "none" : opt.listStyle} ;
+                  list-style-type: ${listStyle} ;
                   list-style-position: inside;
+                }
+                .toc-wrapper > ul {
+                  margin-left: 0.5rem;
+                }
+                @keyframes fadeIn {
+                  from { opacity: 0; }
+                  to { opacity: 1; }
                 }
                 li {
                   /* 默认缩进为 1rem */
                   padding-left: var(--list-indent, 1rem);
                   line-height: 1.5rem;
                   font-size: 1rem;
-                  animation: fadeIn 0.1s ease-in; // 防止页面刷新瞬间显示"0 javascript"
+                  animation: fadeIn 0.01s ease-in; // 防止页面刷新瞬间显示"0 javascript"
                 }
                 .li-marker {
                   display: inline-block;
                   margin-right: 0.5rem;
                 }
                 img.li-marker {
-                  width: ${opt.markerCssSize ?? "1rem"};
-                  height: ${opt.markerCssSize ?? "1rem"};
+                  width: ${liMarkerCssSize};
+                  height: ${liMarkerCssSize};
                   margin: 0 0.5rem 0 0;
                 }
                 .li-marker::before {
                   font-size: 1rem;
                   font-weight: 600;
-                  width: ${opt.markerCssSize ?? "1rem"};
-                  height: ${opt.markerCssSize ?? "1rem"};
+                  width: ${liMarkerCssSize};
+                  height: ${liMarkerCssSize};
                 }
                 /* 嵌套的 ul 内部，让缩进变量自动叠加 1rem */
                 ul ul li {
@@ -152,47 +207,57 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
               `;
 
               const iframeContent = `<iframe
-              style="display:none;"
-              srcdoc="&lt;!DOCTYPE html&gt;
-                      &lt;html&gt;
-                      &lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;/head&gt;
-                      &lt;body&gt;
-                        <strong>Hello from iframe!</strong>
-                        <script is:inline data-astro-rerun>
-                          console.log('🚀 pretty-toc running...');
-                          const currentLocale = window.parent.location.pathname.split('/')[1] || '${opt.locale || DEFALUT_LOCALE}';
-                          const languageMap = ${JSON.stringify(opt.languageMap).replaceAll('"', "'")};
+                style="display:none;"
+                srcdoc="&lt;!DOCTYPE html&gt;
+                  &lt;html&gt;
+                  &lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;/head&gt;
+                  &lt;body&gt;
+                    <strong>Hello from iframe!</strong>
+                    <script is:inline data-astro-rerun>
+                      const currentLocale = window.parent.location.pathname.split('/')[1] || '${opt.locale || DEFALUT_LOCALE}';
+                      const languageMap = ${JSON.stringify(opt.languageMap).replaceAll('"', "'")} || ${JSON.stringify(DEFAULT_LANGUAGE_MAP).replaceAll('"', "'")};
 
-                          function syncTocTitle(
-                            locale,
-                            languageMap
-                          ) {
-                            const tocSummary = window.parent.document.querySelector('[data-satteri-toc-title]');
+                      function syncTocTitle(
+                        locale,
+                        languageMap
+                      ) {
+                        const tocSummary = window.parent.document.querySelector('[data-satteri-toc-title]');
 
-                            if (tocSummary) {
-                              const titleKey = tocSummary.getAttribute('data-satteri-toc-title');
-                              const translation =
-                                languageMap[locale] || titleKey || defaultTitle;
-                              tocSummary.textContent = translation;
-                            }
-                          }
+                        if (tocSummary) {
+                          const titleKey = tocSummary.getAttribute('data-satteri-toc-title');
+                          const translation =
+                            languageMap[locale] || '${title}' || titleKey;
+                          tocSummary.textContent = translation;
+                        }
+                      }
 
-                          syncTocTitle(currentLocale, languageMap);
+                      function toggleToc() {
+                        const tocTitle = window.parent.document.querySelector('.toc-title');
+                        if (tocTitle) {
+                          tocTitle.addEventListener('click', function () {
+                            tocTitle.classList.toggle('open');
+                          })
+                        }
+                      }
 
-                          window.parent.addEventListener('load', function() {
-                            syncTocTitle(currentLocale, languageMap);
-                          });
-                        </script>
-                      &lt;/body&gt;
-                      &lt;/html&gt;">
-            </iframe>`;
+                      syncTocTitle(currentLocale, languageMap);
+                      toggleToc();
+
+                      window.parent.addEventListener('load', function() {
+                        syncTocTitle(currentLocale, languageMap);
+                        toggleToc();
+                      });
+                    </script>
+                  &lt;/body&gt;
+                &lt;/html&gt;">
+              </iframe>`;
 
               ctx.data.firstHeading = node;
               ctx.data.firstHeadingDepth = depth;
               ctx.data.firstHeadingId = contentSlug;
               ctx.data.firstHeadingIndex = ctx.indexOf(node) ?? 0;
 
-              ctx.data.nodeStr = `<details><style>${baseStyle +
+              ctx.data.nodeStr = `<div class="toc-wrapper"><style>${baseStyle +
                 (opt.globalStyle ?? "") +
                 (opt.listStyle === "decimal"
                   ? `ul{
@@ -205,8 +270,56 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
                     .li-marker::before {
                       content: counters(toc-counter, ".");
                     }`
-                  : "")
-                }</style><summary data-satteri-toc-title="${opt.languageMap?.[opt.locale ?? "en-US"] ?? defaultTitle}" class="${opt.class?.summary ?? ""}" style="${opt.style?.summary ?? ""}">${opt.languageMap?.[opt.locale ?? "en-US"] ?? defaultTitle}</summary><ul class="${opt.class?.ul ?? ""}" style="${opt.style?.ul ?? ""}">${nodeStr}</ul>${iframeContent}</details>`;
+                  : "") +
+                (opt.animation && animation !== undefined ?
+                  `.toc-wrapper {
+                      max-height: 2rem;
+                      transition: max-height ${animation.duration} ${animation.timingFunction};
+                    }
+                    .toc-wrapper:has(.toc-title.open) {
+                      max-height: 100vh;
+                    }
+                    ` : "") +
+                (opt.titleMarkerType === "icon" ?
+                  `
+                    .toc-title::before {
+                      content: '${closedMarker} ';
+                      display: contents;
+                      font-size: 1rem;
+                    }
+                    .toc-title.open::before {
+                      content: '${openedMarker} ';
+                      display: contents;
+                      font-size: 1rem;
+                    }
+                  ` : "") +
+                (opt.titleMarkerType === "image" ?
+                  `
+                    .toc-wrapper > .toc-title, .toc-wrapper > ul {
+                      margin-left: 2rem;
+                    }
+                    .toc-title::before {
+                      content: "";
+                      background: url('${closedMarker}') center / contain no-repeat;
+                      width: ${titleMarkerCssSize};
+                      height: ${titleMarkerCssSize};
+                      position: absolute;
+                      left: -2rem;
+                      top: 50%;
+                      transform: translateY(-50%);
+                    }
+                    .toc-title.open::before {
+                      content: "";
+                      background: url('${openedMarker}') center / contain no-repeat;
+                      width: ${titleMarkerCssSize};
+                      height: ${titleMarkerCssSize};
+                      position: absolute;
+                      left: -2rem;
+                      top: 50%;
+                      transform: translateY(-50%);
+                    }
+                  ` : "")
+                }</style><h2 data-satteri-toc-title="${title}" class="toc-title ${opt.class?.title ?? ""}" style="${opt.style?.title ?? ""}">${title}</h2><ul class="${opt.class?.ul ?? ""}" style="${opt.style?.ul ?? ""}">${nodeStr}</ul>${iframeContent}</div>`;
             } else {
               const indexA = ctx.data.nodeStr?.lastIndexOf(tagSignal);
               if (indexA !== -1) {

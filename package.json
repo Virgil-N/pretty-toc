@@ -1,6 +1,6 @@
 {
   "name": "pretty-toc",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "type": "module",
   "description": "A Table of Contents generation plugin for the Satteri markdown parser library.",
   "keywords": [
