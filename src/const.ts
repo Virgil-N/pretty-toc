@@ -6,7 +6,7 @@ export const DEFAULT_TITLE_MARKER_TYPE = "icon";
 export const DEFAULT_TITLE_MARKER_CSS_SIZE = "fit-content";
 export const DEFALUT_LOCALE = "en-US";
 export const DEFAULT_LIST_STYLE = "decimal";
-export const DEFAULT_LI_MARKER_CSS_SIZE = "1.5rem";
+export const DEFAULT_LI_MARKER_CSS_SIZE = "1rem";
 export const DEFAULT_ANIMATION = {
   duration: "0.8s",
   timingFunction: 'ease-in-out'

@@ -1,6 +1,6 @@
 {
   "name": "pretty-toc",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "type": "module",
   "description": "A Table of Contents generation plugin for the Satteri markdown parser library.",
   "keywords": [
@@ -12,6 +12,14 @@
   ],
   "author": "Virgil",
   "license": "MIT",
+  "packageManager": "pnpm@11.20.0",
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": ">=24.0.0",
+      "onFail": "download"
+    }
+  },
   "homepage": "https://github.com/Virgil-N/pretty-toc#readme",
   "repository": {
     "type": "git",
