@@ -81,8 +81,8 @@ processor: satteri({
 |Property‌|Type|Default Value|Preset Value|Info|
 |:---|:---|:---|:---|:--|
 |title|string|Table of Contents|Table of Contents|-|
-|openedMarker|string or undefined|undefined|▼|titleMarkerType must already be set.|
-|closedMarker|string or undefined|undefined|▶︎|titleMarkerType must already be set.|
+|openedMarker|string or undefined|undefined|▼|***Note: titleMarkerType must already be set.***|
+|closedMarker|string or undefined|undefined|▶︎|***Note: titleMarkerType must already be set.***|
 |titleMarkerType|string or undefined|undefined|icon|Value can only be "icon" or "image".|
 |titleMarkerCssSize|string or undefined|undefined|fit-content|-|
 |listStyle|string or undefined|undefined|decimal|eg. disc, circle, decimal, none... or icon and image|
