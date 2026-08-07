@@ -6,8 +6,44 @@ A Table of Contents generation plugin for the Satteri markdown parser library.
 ## Install
 
 ```
+// install with npm
 npm install pretty-toc --save-dev
+
+// install with pnpm
+pnpm install pretty-toc --save-dev
+
+// install with yarn
+yarn add -D pretty-toc
+
+// install with bun
+bun add -D pretty-toc
+
+// install with deno
+deno add -D pretty-toc
 ```
+
+## Table of Contents
+
+- [Screenshots](#Screenshots)
+- [Example](#Example)
+- [Options](#Options)
+
+## Screenshots
+
+- icon
+![](https://github.com/Virgil-N/resource/blob/main/image/pretty-toc/with-icon.png)
+
+- image
+![](https://github.com/Virgil-N/resource/blob/main/image/pretty-toc/with-image.png)
+
+- dot
+![](https://github.com/Virgil-N/resource/blob/main/image/pretty-toc/use-dot.png)
+
+- decimal
+![](https://github.com/Virgil-N/resource/blob/main/image/pretty-toc/use-decimal.png)
+
+- nested image
+![](https://github.com/Virgil-N/resource/blob/main/image/pretty-toc/use-multiple-image.png)
 
 ## Example
 
