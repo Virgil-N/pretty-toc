@@ -24,7 +24,7 @@ processor: satteri({
       openedMarker: '🦋',
       closedMarker: '🐢',
       titleMarkerType: 'icon',
-      titleMarkerCssSize: '1.5rem',
+      titleMarkerCssSize: '1rem',
       listStyle: "image", // disc, circle, decimal, none... icon, image...
       icon: ["🐶", "🦁", "🐷", "🐸", "🐥", "🐞"], // or just a string, eg. "🐥"
       image: [
