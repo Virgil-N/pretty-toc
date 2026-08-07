@@ -115,7 +115,7 @@ processor: satteri({
 }),
 ```
 
-## options
+## Options
 
 |Property‌|Type|Default Value|Preset Value|Info|
 |:---|:---|:---|:---|:--|
