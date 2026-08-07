@@ -206,120 +206,124 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
                 }
               `;
 
-              const iframeContent = `<iframe
-                style="display:none;"
-                srcdoc="&lt;!DOCTYPE html&gt;
-                  &lt;html&gt;
-                  &lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;/head&gt;
-                  &lt;body&gt;
-                    <strong>Hello from iframe!</strong>
-                    <script is:inline data-astro-rerun>
-                      const currentLocale = window.parent.location.pathname.split('/')[1] || '${opt.locale || DEFALUT_LOCALE}';
-                      const languageMap = ${JSON.stringify(opt.languageMap).replaceAll('"', "'")} || ${JSON.stringify(DEFAULT_LANGUAGE_MAP).replaceAll('"', "'")};
+              const iframeContent = `
+                <iframe
+                  style="display:none;"
+                  srcdoc="&lt;!DOCTYPE html&gt;
+                    &lt;html&gt;
+                    &lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;/head&gt;
+                    &lt;body&gt;
+                      <strong>Hello from iframe!</strong>
+                      <script is:inline data-astro-rerun>
+                        const currentLocale = window.parent.location.pathname.split('/')[1] || '${opt.locale || DEFALUT_LOCALE}';
+                        const languageMap = ${JSON.stringify(opt.languageMap).replaceAll('"', "'")} || ${JSON.stringify(DEFAULT_LANGUAGE_MAP).replaceAll('"', "'")};
 
-                      function syncTocTitle(
-                        locale,
-                        languageMap
-                      ) {
-                        const tocSummary = window.parent.document.querySelector('[data-satteri-toc-title]');
+                        function syncTocTitle(
+                          locale,
+                          languageMap
+                        ) {
+                          const tocSummary = window.parent.document.querySelector('[data-satteri-toc-title]');
 
-                        if (tocSummary) {
-                          const titleKey = tocSummary.getAttribute('data-satteri-toc-title');
-                          const translation =
-                            languageMap[locale] || '${title}' || titleKey;
-                          tocSummary.textContent = translation;
+                          if (tocSummary) {
+                            const titleKey = tocSummary.getAttribute('data-satteri-toc-title');
+                            const translation =
+                              languageMap[locale] || '${title}' || titleKey;
+                            tocSummary.textContent = translation;
+                          }
                         }
-                      }
 
-                      function toggleToc() {
-                        const tocTitle = window.parent.document.querySelector('.toc-title');
-                        if (tocTitle) {
-                          tocTitle.addEventListener('click', function () {
-                            tocTitle.classList.toggle('open');
-                          })
+                        function toggleToc() {
+                          const tocTitle = window.parent.document.querySelector('.toc-title');
+                          if (tocTitle) {
+                            tocTitle.addEventListener('click', function () {
+                              tocTitle.classList.toggle('open');
+                            })
+                          }
                         }
-                      }
 
-                      syncTocTitle(currentLocale, languageMap);
-                      toggleToc();
-
-                      window.parent.addEventListener('load', function() {
                         syncTocTitle(currentLocale, languageMap);
                         toggleToc();
-                      });
-                    </script>
-                  &lt;/body&gt;
-                &lt;/html&gt;">
-              </iframe>`;
+
+                        window.parent.addEventListener('load', function() {
+                          syncTocTitle(currentLocale, languageMap);
+                          toggleToc();
+                        });
+                      </script>
+                    &lt;/body&gt;
+                  &lt;/html&gt;">
+                </iframe>
+              `;
 
               ctx.data.firstHeading = node;
               ctx.data.firstHeadingDepth = depth;
               ctx.data.firstHeadingId = contentSlug;
               ctx.data.firstHeadingIndex = ctx.indexOf(node) ?? 0;
 
-              ctx.data.nodeStr = `<div class="toc-wrapper"><style>${baseStyle +
+              ctx.data.nodeStr = `
+                <div class="toc-wrapper"><style>${baseStyle +
                 (opt.globalStyle ?? "") +
                 (opt.listStyle === "decimal"
                   ? `ul{
-                      list-style-type: none;
-                      counter-reset: toc-counter;
-                    }
-                    li {
-                      counter-increment: toc-counter;
-                    }
-                    .li-marker::before {
-                      content: counters(toc-counter, ".");
-                    }`
+                        list-style-type: none;
+                        counter-reset: toc-counter;
+                      }
+                      li {
+                        counter-increment: toc-counter;
+                      }
+                      .li-marker::before {
+                        content: counters(toc-counter, ".");
+                      }`
                   : "") +
                 (opt.animation && animation !== undefined ?
                   `.toc-wrapper {
-                      max-height: 2rem;
-                      transition: max-height ${animation.duration} ${animation.timingFunction};
-                    }
-                    .toc-wrapper:has(.toc-title.open) {
-                      max-height: 100vh;
-                    }
-                    ` : "") +
+                        max-height: 2rem;
+                        transition: max-height ${animation.duration} ${animation.timingFunction};
+                      }
+                      .toc-wrapper:has(.toc-title.open) {
+                        max-height: 100vh;
+                      }
+                      ` : "") +
                 (opt.titleMarkerType === "icon" ?
                   `
-                    .toc-title::before {
-                      content: '${closedMarker} ';
-                      display: contents;
-                      font-size: 1rem;
-                    }
-                    .toc-title.open::before {
-                      content: '${openedMarker} ';
-                      display: contents;
-                      font-size: 1rem;
-                    }
-                  ` : "") +
+                      .toc-title::before {
+                        content: '${closedMarker} ';
+                        display: contents;
+                        font-size: 1rem;
+                      }
+                      .toc-title.open::before {
+                        content: '${openedMarker} ';
+                        display: contents;
+                        font-size: 1rem;
+                      }
+                    ` : "") +
                 (opt.titleMarkerType === "image" ?
                   `
-                    .toc-wrapper > .toc-title, .toc-wrapper > ul {
-                      margin-left: 2rem;
-                    }
-                    .toc-title::before {
-                      content: "";
-                      background: url('${closedMarker}') center / contain no-repeat;
-                      width: ${titleMarkerCssSize};
-                      height: ${titleMarkerCssSize};
-                      position: absolute;
-                      left: -2rem;
-                      top: 50%;
-                      transform: translateY(-50%);
-                    }
-                    .toc-title.open::before {
-                      content: "";
-                      background: url('${openedMarker}') center / contain no-repeat;
-                      width: ${titleMarkerCssSize};
-                      height: ${titleMarkerCssSize};
-                      position: absolute;
-                      left: -2rem;
-                      top: 50%;
-                      transform: translateY(-50%);
-                    }
-                  ` : "")
-                }</style><h2 data-satteri-toc-title="${title}" class="toc-title ${opt.class?.title ?? ""}" style="${opt.style?.title ?? ""}">${title}</h2><ul class="${opt.class?.ul ?? ""}" style="${opt.style?.ul ?? ""}">${nodeStr}</ul>${iframeContent}</div>`;
+                      .toc-wrapper > .toc-title, .toc-wrapper > ul {
+                        margin-left: 2rem;
+                      }
+                      .toc-title::before {
+                        content: "";
+                        background: url('${closedMarker}') center / contain no-repeat;
+                        width: ${titleMarkerCssSize};
+                        height: ${titleMarkerCssSize};
+                        position: absolute;
+                        left: -2rem;
+                        top: 50%;
+                        transform: translateY(-50%);
+                      }
+                      .toc-title.open::before {
+                        content: "";
+                        background: url('${openedMarker}') center / contain no-repeat;
+                        width: ${titleMarkerCssSize};
+                        height: ${titleMarkerCssSize};
+                        position: absolute;
+                        left: -2rem;
+                        top: 50%;
+                        transform: translateY(-50%);
+                      }
+                    ` : "")
+                }</style><h2 data-satteri-toc-title="${title}" class="toc-title ${opt.class?.title ?? ""}" style="${opt.style?.title ?? ""}">${title}</h2><ul class="${opt.class?.ul ?? ""}" style="${opt.style?.ul ?? ""}">${nodeStr}</ul>${iframeContent}</div>
+              `;
             } else {
               const indexA = ctx.data.nodeStr?.lastIndexOf(tagSignal);
               if (indexA !== -1) {
