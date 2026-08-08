@@ -44,10 +44,35 @@ export interface HastOption {
   languageMap?: Record<string, string>;
 }
 
+export interface CUSTOM_NODE {
+  /** 深度 */
+  depth: number;
+  /** 节点文本内容 */
+  content: string;
+  /** 子节点数组 */
+  children: Array<CUSTOM_NODE>;
+  /** 父节点 */
+  parent: CUSTOM_NODE | undefined;
+}
+
+export interface NODE_TREE {
+  /** 根结点 */
+  rootNode: CUSTOM_NODE;
+  /** 遍历插入的上一个节点 */
+  previousNode: CUSTOM_NODE;
+}
+
 export interface Data {
+  /** 文档中第一个标题元素 */
   firstHeading: Readonly<Element>;
+  /** 文档中第一个标题元素的深度 */
   firstHeadingDepth: number;
+  /** 文档中第一个标题元素的ID */
   firstHeadingId: string;
+  /** 文档中第一个标题元素的索引位置 */
   firstHeadingIndex: number;
+  /** 生成的nodeTree包含的所有节点的html文本内容 */
   nodeStr: string;
+  /** 遍历文档生成的nodeTree */
+  nodeTree: NODE_TREE;
 }

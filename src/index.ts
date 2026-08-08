@@ -13,10 +13,15 @@ import {
   DEFAULT_LANGUAGE_MAP,
   DEFAULT_LIST_STYLE
 } from "./const";
-import type { Data, HastOption } from "../basic";
+import type { Data, HastOption, CUSTOM_NODE } from "../basic";
 import notFoundImg from "./assets/svg/image-not-found.svg";
 import slug from "slug";
 
+/**
+ *
+ * @param option 用户传入插件的配置
+ * @returns 插件实例
+ */
 function prettyToc(option?: HastOption): HastPluginDefinition {
   return defineHastPlugin({
     name: "prettyToc",
@@ -96,12 +101,56 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
                 marker = "";
             }
 
-            const tagSignal = `<span data-depth='${depth}' style="display: none;"></span>`;
-            const tagSignalLength = tagSignal.length;
-
-            const nodeStr = `<li id="li-${contentSlug}" class="${opt.class?.li ?? ""}" style="${opt.style?.li ?? ""}" data-depth=${depth}><div class="li-row">${marker}<a href="#${contentSlug}" class="${opt.class?.a ?? ""}" style="${opt.style?.a ?? ""}">${content}</a></div>${tagSignal}</li>`;
+            let nodeStr = `<li id="li-${contentSlug}" class="${opt.class?.li ?? ""}" style="${opt.style?.li ?? ""}" data-depth=${depth}><div class="li-row">${marker}<a href="#${contentSlug}" class="${opt.class?.a ?? ""}" style="${opt.style?.a ?? ""}">${content}</a></div></li>`;
 
             ctx.setProperty(node, "id", contentSlug);
+
+            if (ctx.data.nodeTree === undefined) {
+              ctx.data.firstHeading = node;
+              ctx.data.firstHeadingDepth = depth;
+              ctx.data.firstHeadingId = contentSlug;
+              ctx.data.firstHeadingIndex = ctx.indexOf(node) ?? 0;
+
+              const rootNode = { depth: 0, content: '', children: [], parent: undefined };
+              ctx.data.nodeTree = {
+                rootNode,
+                previousNode: rootNode
+              };
+              if (depth === 1) {
+                const currentNode = { depth: 1, content: nodeStr, children: [], parent: rootNode };
+                ctx.data.nodeTree.rootNode.children.push(currentNode);
+                ctx.data.nodeTree.previousNode = currentNode;
+              } else {
+                for (let i = 1; i <= depth; i++) {
+                  const currentNode = { depth: i, content: (i === depth) ? nodeStr : '', children: [], parent: ctx.data.nodeTree.previousNode };
+                  ctx.data.nodeTree.previousNode.children.push(currentNode);
+                  ctx.data.nodeTree.previousNode = currentNode;
+                }
+              }
+            } else {
+              let hasFound = false;
+              let nextSearchNode = ctx.data.nodeTree.rootNode;
+
+              searchNode: while (!hasFound) {
+                if (nextSearchNode.depth + 1 === depth) {
+                  const currentNode = { depth: depth, content: nodeStr, children: [], parent: nextSearchNode }
+                  nextSearchNode.children.push(currentNode);
+                  ctx.data.nodeTree.previousNode = currentNode;
+                  hasFound = true;
+                  break searchNode;
+                } else {
+                  if (nextSearchNode.children.length > 0) {
+                    nextSearchNode = nextSearchNode.children[nextSearchNode.children.length - 1];
+                    continue searchNode;
+                  } else {
+                    const middleNode = { depth: nextSearchNode.depth + 1, content: "", children: [], parent: nextSearchNode };
+                    nextSearchNode.children.push(middleNode);
+                    nextSearchNode = middleNode;
+                    continue searchNode;
+                  }
+                }
+              }
+            }
 
             // 处理标题不在顶层的情况(比如在一个section标签内)
             let parent = ctx.parent(node);
@@ -112,12 +161,16 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
               } else break;
             }
 
-            if (ctx.data.nodeStr === undefined) {
+            // 替换toc
+            if (parent.type === "root") {
+              const collectedNodeStr = concatNodeStr(ctx.data.nodeTree.rootNode, opt);
+
               const baseStyle = `
                 .toc-wrapper {
                   display: grid;
                   grid-template-rows: 0fr;
                   overflow: hidden;
+                  margin-bottom: 2rem;
                 }
                 .toc-wrapper:has(.toc-title.open) {
                   grid-template-rows: 1fr;
@@ -130,20 +183,18 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
                   position: relative;
                 }
                 ul {
-                  padding-left: 0;
+                  padding-left: var(--list-indent, 1.5rem);
                   list-style-type: ${listStyle} ;
                   list-style-position: inside;
                 }
-                .toc-wrapper > ul {
-                  margin-left: 0.5rem;
+                ul:first-child {
+
                 }
                 @keyframes fadeIn {
                   from { opacity: 0; }
                   to { opacity: 1; }
                 }
                 li {
-                  /* 默认缩进为 1rem */
-                  padding-left: var(--list-indent, 1rem);
                   line-height: 1.5rem;
                   font-size: 1rem;
                   animation: fadeIn 0.01s ease-in; // 防止页面刷新瞬间显示"0 javascript"
@@ -164,7 +215,7 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
                   height: ${liMarkerCssSize};
                 }
                 /* 嵌套的 ul 内部，让缩进变量自动叠加 1rem */
-                ul ul li {
+                ul ul {
                   --list-indent: calc(var(--list-indent, 1rem) + 1rem);
                 }
                 .li-row {
@@ -286,11 +337,6 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
                 </iframe>
               `;
 
-              ctx.data.firstHeading = node;
-              ctx.data.firstHeadingDepth = depth;
-              ctx.data.firstHeadingId = contentSlug;
-              ctx.data.firstHeadingIndex = ctx.indexOf(node) ?? 0;
-
               ctx.data.nodeStr = `
                 <div class="toc-wrapper"><style>${baseStyle +
                 (opt.globalStyle ?? "") +
@@ -354,58 +400,9 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
                         transform: translateY(-50%);
                       }
                     ` : "")
-                }</style><h2 data-satteri-toc-title="${title}" class="toc-title ${opt.class?.title ?? ""}" style="${opt.style?.title ?? ""}">${title}</h2><ul class="${opt.class?.ul ?? ""}" style="${opt.style?.ul ?? ""}">${nodeStr}</ul>${iframeContent}</div>
+                }</style><h2 data-satteri-toc-title="${title}" class="toc-title ${opt.class?.title ?? ""}" style="${opt.style?.title ?? ""}">${title}</h2>${collectedNodeStr}${iframeContent}</div>
               `;
-            } else {
-              const indexA = ctx.data.nodeStr?.lastIndexOf(tagSignal);
-              if (indexA !== -1) {
-                ctx.data.nodeStr =
-                  ctx.data.nodeStr?.slice(0, indexA + tagSignalLength + 5) +
-                  nodeStr +
-                  ctx.data.nodeStr?.slice(indexA + tagSignalLength + 5);
-              } else {
-                if (depth > 1) {
-                  let indexB = -1;
-                  for (let i = depth; i > 0; i--) {
-                    indexB = ctx.data.nodeStr?.lastIndexOf(
-                      `<span data-depth='${i}' style="display: none;"></span>`,
-                    );
-                    if (indexB !== -1) {
-                      break;
-                    }
-                  }
-                  if (indexB !== -1) {
-                    ctx.data.nodeStr =
-                      ctx.data.nodeStr?.slice(0, indexB) +
-                      `<ul class="${opt.class?.ul ?? ""}" style="${opt.style?.ul ?? ""}">` +
-                      nodeStr +
-                      `</ul>` +
-                      ctx.data.nodeStr?.slice(indexB);
-                  } else {
-                    const indexC = ctx.data.nodeStr?.lastIndexOf(`</ul>`);
-                    if (indexC !== -1) {
-                      ctx.data.nodeStr =
-                        ctx.data.nodeStr?.slice(0, indexC) +
-                        nodeStr +
-                        ctx.data.nodeStr?.slice(indexC);
-                    } else {
-                      // 没有ul结尾标签？不可能！
-                    }
-                  }
-                } else {
-                  const indexB = ctx.data.nodeStr?.lastIndexOf(`</ul>`);
-                  if (indexB !== -1) {
-                    ctx.data.nodeStr =
-                      ctx.data.nodeStr?.slice(0, indexB) +
-                      nodeStr +
-                      ctx.data.nodeStr?.slice(indexB);
-                  }
-                }
-              }
-            }
 
-            // 替换toc
-            if (parent.type === "root") {
               ctx.replaceNode(parent.children[ctx.data.firstHeadingIndex], {
                 type: "raw",
                 value:
@@ -422,4 +419,21 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
   });
 }
 
+/**
+ *
+ * @param node 遍历的当前节点
+ * @param opt 传入插件的配置
+ * @returns 所有节点的html内容字符串
+ */
+function concatNodeStr(node: CUSTOM_NODE, opt: HastOption): string {
+  let childNodeStr = ""
+  if (node.children.length > 0) {
+    for (let i = 0; i < node.children.length; i++) {
+      childNodeStr += concatNodeStr(node.children[i], opt);
+    }
+    childNodeStr = `<ul class="${opt.class?.ul ?? ""}" style="${opt.style?.ul ?? ""}">${childNodeStr}</ul>`;
+    return node.content + childNodeStr;
+  }
+  return node.content;
+}
 export default prettyToc;
