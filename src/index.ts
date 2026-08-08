@@ -187,14 +187,15 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
                   list-style-type: ${listStyle} ;
                   list-style-position: inside;
                 }
-                ul:first-child {
-
+                .toc-wrapper > ul {
+                  padding-left: 0;
                 }
                 @keyframes fadeIn {
                   from { opacity: 0; }
                   to { opacity: 1; }
                 }
                 li {
+                  padding: 0;
                   line-height: 1.5rem;
                   font-size: 1rem;
                   animation: fadeIn 0.01s ease-in; // 防止页面刷新瞬间显示"0 javascript"
