@@ -82,12 +82,14 @@ processor: satteri({
         timingFunction: 'ease-in-out'
       },
       class: {
+        title: "",
         ul: "",
         li: "",
         a: "",
       },
       globalStyle: "",
       style: {
+        title: "",
         ul: "",
         li: "",
         a: "",
