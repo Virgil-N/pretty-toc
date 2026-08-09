@@ -342,7 +342,7 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
                 <div class="toc-wrapper"><style>${baseStyle +
                 (opt.globalStyle ?? "") +
                 (opt.listStyle === "decimal"
-                  ? `ul{
+                  ? `ul:has(> li) {
                         list-style-type: none;
                         counter-reset: toc-counter;
                       }
