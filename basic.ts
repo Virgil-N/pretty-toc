@@ -1,5 +1,3 @@
-import type { Element } from "hast";
-
 export interface tagHasProperty {
   title?: string;
   ul?: string;
@@ -62,17 +60,13 @@ export interface NODE_TREE {
   previousNode: CUSTOM_NODE;
 }
 
-export interface Data {
-  /** 文档中第一个标题元素 */
-  firstHeading: Readonly<Element>;
-  /** 文档中第一个标题元素的深度 */
-  firstHeadingDepth: number;
-  /** 文档中第一个标题元素的ID */
-  firstHeadingId: string;
-  /** 文档中第一个标题元素的索引位置 */
-  firstHeadingIndex: number;
-  /** 生成的nodeTree包含的所有节点的html文本内容 */
-  nodeStr: string;
-  /** 遍历文档生成的nodeTree */
-  nodeTree: NODE_TREE;
+export interface CUSTOM_HEADING {
+  /** 标题元素 */
+  headingText?: string;
+  /** 标题元素的深度 */
+  headingDepth?: number;
+  /** 标题元素的ID */
+  headingId?: string;
+  /** 标题元素的索引位置 */
+  headingIndex?: number;
 }

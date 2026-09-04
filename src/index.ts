@@ -1,4 +1,4 @@
-import { defineHastPlugin, type HastVisitorContext, type HastPluginDefinition } from "satteri";
+import { defineHastPlugin, type HastPluginDefinition } from "satteri";
 import {
   DEFAULT_OPTIONS,
   DEFAULT_TITLE,
@@ -13,7 +13,7 @@ import {
   DEFAULT_LANGUAGE_MAP,
   DEFAULT_LIST_STYLE
 } from "./const";
-import type { Data, HastOption, CUSTOM_NODE } from "../basic";
+import type { HastOption, CUSTOM_HEADING, CUSTOM_NODE, NODE_TREE } from "../basic";
 import notFoundImg from "./assets/svg/image-not-found.svg";
 import slug from "slug";
 
@@ -23,20 +23,33 @@ import slug from "slug";
  * @returns 插件实例
  */
 function prettyToc(option?: HastOption): HastPluginDefinition {
+  const opt = option ?? DEFAULT_OPTIONS;
+  const lightThemeHighlightColor =
+    opt.lightThemeHighlightColor || DEFAULT_LIGHT_THEME_HIGHLIGHT_COLOR;
+  const darkThemeHighlightColor =
+    opt.darkThemeHighlightColor || DEFAULT_DARK_THEME_HIGHLIGHT_COLOR;
+  const titleMarkerCssSize = opt.titleMarkerCssSize || DEFAULT_TITLE_MARKER_CSS_SIZE;
+  const openedMarker = opt.openedMarker || DEFAULT_OPENED_TITLE_MARKER;
+  const closedMarker = opt.closedMarker || DEFAULT_CLOSED_TITLE_MARKER;
+  const liMarkerCssSize = opt.liMarkerCssSize || DEFAULT_LI_MARKER_CSS_SIZE;
+
+  let title = opt.title || DEFAULT_TITLE;
+  let listStyle = DEFAULT_LIST_STYLE;
+  let animation: boolean | { duration: string, timingFunction: string } | undefined = undefined;
+
+  let headingTree: NODE_TREE | undefined = undefined;
+  let firstHeading: CUSTOM_HEADING = {};
+
   return defineHastPlugin({
     name: "prettyToc",
     element: [
       {
         filter: ["h1", "h2", "h3", "h4", "h5", "h6"],
-        visit(node, ctx: { data: Data } & HastVisitorContext) {
-          const opt = option ?? DEFAULT_OPTIONS;
-
+        visit(node, ctx) {
           try {
             const depth = parseInt(node.tagName.slice(-1), 10);
             const content = ctx.textContent(node);
             const contentSlug = slug(content) + new Date().getTime();
-
-            let title = opt.title || DEFAULT_TITLE
 
             if (opt.languageMap) {
               title = opt.languageMap[opt.locale ?? DEFALUT_LOCALE] || DEFAULT_TITLE;
@@ -44,24 +57,11 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
               title = DEFAULT_LANGUAGE_MAP[opt.locale ?? DEFALUT_LOCALE] || DEFAULT_TITLE;
             }
 
-            let listStyle = DEFAULT_LIST_STYLE;
-
             if (opt.listStyle === "icon" || opt.listStyle === "image" || opt.listStyle === "decimal") {
               listStyle = "none";
             } else if (opt.listStyle !== undefined) {
               listStyle = opt.listStyle;
             }
-
-            const lightThemeHighlightColor =
-              opt.lightThemeHighlightColor || DEFAULT_LIGHT_THEME_HIGHLIGHT_COLOR;
-            const darkThemeHighlightColor =
-              opt.darkThemeHighlightColor || DEFAULT_DARK_THEME_HIGHLIGHT_COLOR;
-            const titleMarkerCssSize = opt.titleMarkerCssSize || DEFAULT_TITLE_MARKER_CSS_SIZE;
-            const openedMarker = opt.openedMarker || DEFAULT_OPENED_TITLE_MARKER;
-            const closedMarker = opt.closedMarker || DEFAULT_CLOSED_TITLE_MARKER;
-            const liMarkerCssSize = opt.liMarkerCssSize || DEFAULT_LI_MARKER_CSS_SIZE;
-
-            let animation = undefined;
 
             if (typeof opt.animation === "object" && opt.animation !== undefined) {
               animation = opt.animation ?? DEFAULT_ANIMATION;
@@ -105,37 +105,37 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
 
             ctx.setProperty(node, "id", contentSlug);
 
-            if (ctx.data.nodeTree === undefined) {
-              ctx.data.firstHeading = node;
-              ctx.data.firstHeadingDepth = depth;
-              ctx.data.firstHeadingId = contentSlug;
-              ctx.data.firstHeadingIndex = ctx.indexOf(node) ?? 0;
+            if (headingTree === undefined) {
+              firstHeading.headingText = ctx.textContent(node);
+              firstHeading.headingDepth = depth;
+              firstHeading.headingId = contentSlug;
+              firstHeading.headingIndex = ctx.indexOf(node) ?? 0;
 
-              const rootNode = { depth: 0, content: '', children: [], parent: undefined };
-              ctx.data.nodeTree = {
+              const rootNode: CUSTOM_NODE = { depth: 0, content: '', children: [], parent: undefined };
+              headingTree = {
                 rootNode,
                 previousNode: rootNode
               };
               if (depth === 1) {
                 const currentNode = { depth: 1, content: nodeStr, children: [], parent: rootNode };
-                ctx.data.nodeTree.rootNode.children.push(currentNode);
-                ctx.data.nodeTree.previousNode = currentNode;
+                headingTree.rootNode.children.push(currentNode);
+                headingTree.previousNode = currentNode;
               } else {
                 for (let i = 1; i <= depth; i++) {
-                  const currentNode = { depth: i, content: (i === depth) ? nodeStr : '', children: [], parent: ctx.data.nodeTree.previousNode };
-                  ctx.data.nodeTree.previousNode.children.push(currentNode);
-                  ctx.data.nodeTree.previousNode = currentNode;
+                  const currentNode = { depth: i, content: (i === depth) ? nodeStr : '', children: [], parent: headingTree.previousNode };
+                  headingTree.previousNode.children.push(currentNode);
+                  headingTree.previousNode = currentNode;
                 }
               }
             } else {
               let hasFound = false;
-              let nextSearchNode = ctx.data.nodeTree.rootNode;
+              let nextSearchNode = headingTree.rootNode;
 
               searchNode: while (!hasFound) {
                 if (nextSearchNode.depth + 1 === depth) {
                   const currentNode = { depth: depth, content: nodeStr, children: [], parent: nextSearchNode }
                   nextSearchNode.children.push(currentNode);
-                  ctx.data.nodeTree.previousNode = currentNode;
+                  headingTree.previousNode = currentNode;
                   hasFound = true;
                   break searchNode;
                 } else {
@@ -151,272 +151,268 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
                 }
               }
             }
-
-            // 处理标题不在顶层的情况(比如在一个section标签内)
-            let parent = ctx.parent(node);
-            while (parent.type !== "root" && parent !== undefined) {
-              const p = ctx.parent(parent);
-              if (p) {
-                parent = p;
-              } else break;
-            }
-
-            // 替换toc
-            if (parent.type === "root") {
-              const collectedNodeStr = concatNodeStr(ctx.data.nodeTree.rootNode, opt);
-
-              const baseStyle = `
-                .toc-wrapper {
-                  display: grid;
-                  grid-template-rows: 0fr;
-                  overflow: hidden;
-                  margin-bottom: 2rem;
-                }
-                .toc-wrapper:has(.toc-title.open) {
-                  grid-template-rows: 1fr;
-                }
-                .toc-title {
-                  font-size: 1.2rem;
-                  font-weight: 600;
-                  margin: 0 0 0.5rem 0;
-                  width: fit-content;
-                  position: relative;
-                }
-                ul {
-                  padding-left: var(--list-indent, 1.5rem);
-                  list-style-type: ${listStyle} ;
-                  list-style-position: inside;
-                }
-                ul:not(:has(> li)) {
-                  padding-left: 0;
-                }
-                @keyframes fadeIn {
-                  from { opacity: 0; }
-                  to { opacity: 1; }
-                }
-                li {
-                  padding: 0;
-                  line-height: 1.5rem;
-                  font-size: 1rem;
-                  animation: fadeIn 0.01s ease-in; // 防止页面刷新瞬间显示"0 javascript"
-                }
-                .li-marker {
-                  display: inline-block;
-                  margin-right: 0.5rem;
-                }
-                img.li-marker {
-                  width: ${liMarkerCssSize};
-                  height: ${liMarkerCssSize};
-                  margin: 0 0.5rem 0 0;
-                }
-                .li-marker::before {
-                  font-size: 1rem;
-                  font-weight: 600;
-                  width: ${liMarkerCssSize};
-                  height: ${liMarkerCssSize};
-                }
-                /* 嵌套的 ul 内部，让缩进变量自动叠加 1rem */
-                ul ul {
-                  --list-indent: calc(var(--list-indent, 1rem) + 1rem);
-                }
-                .li-row {
-                  display: inline-flex;
-                  flex-direction: row;
-                  justify-content: flex-start;
-                  align-items: center;
-                }
-                .li-row > img {
-                  margin: 0 0.5rem 0 0;
-                }
-                .li-row > a {
-                  text-decoration: none;
-                }
-                @media (hover: hover) {
-                  .toc-title:hover {
-                    color: ${lightThemeHighlightColor};
-                    cursor: pointer;
-                  }
-                  html.dark .toc-title:hover {
-                    color: ${darkThemeHighlightColor};
-                  }
-                  .li-row:hover {
-                    color: ${lightThemeHighlightColor};
-                  }
-                  .li-row:hover > .li-marker::before {
-                    color: ${lightThemeHighlightColor};
-                  }
-                  .li-row:hover > a {
-                    color: ${lightThemeHighlightColor};
-                  }
-                  html.dark .li-row:hover {
-                    color: ${darkThemeHighlightColor};
-                  }
-                  html.dark .li-row:hover > .li-marker::before {
-                    color: ${darkThemeHighlightColor};
-                  }
-                  html.dark .li-row:hover > a {
-                    color: ${darkThemeHighlightColor};
-                  }
-                }
-                .toc-title:active {
-                  color: ${lightThemeHighlightColor};
-                  cursor: pointer;
-                }
-                html.dark .toc-title:active {
-                  color: ${darkThemeHighlightColor};
-                }
-                .li-row:active {
-                  color: ${lightThemeHighlightColor};
-                }
-                .li-row:active > .li-marker::before {
-                  color: ${lightThemeHighlightColor};
-                }
-                .li-row:active > a {
-                  color: ${lightThemeHighlightColor};
-                }
-                html.dark .li-row:active {
-                  color: ${darkThemeHighlightColor};
-                }
-                html.dark .li-row:active > .li-marker::before {
-                  color: ${darkThemeHighlightColor};
-                }
-                html.dark .li-row:active > a {
-                  color: ${darkThemeHighlightColor};
-                }
-              `;
-
-              const iframeContent = `
-                <iframe
-                  style="display:none;"
-                  srcdoc="&lt;!DOCTYPE html&gt;
-                    &lt;html&gt;
-                    &lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;/head&gt;
-                    &lt;body&gt;
-                      <script is:inline data-astro-rerun>
-                        const currentLocale = window.parent.location.pathname.split('/')[1] || '${opt.locale || DEFALUT_LOCALE}';
-                        const languageMap = ${JSON.stringify(opt.languageMap).replaceAll('"', "'")} || ${JSON.stringify(DEFAULT_LANGUAGE_MAP).replaceAll('"', "'")};
-
-                        function syncTocTitle(
-                          locale,
-                          languageMap
-                        ) {
-                          const tocSummary = window.parent.document.querySelector('[data-satteri-toc-title]');
-
-                          if (tocSummary) {
-                            const titleKey = tocSummary.getAttribute('data-satteri-toc-title');
-                            const translation =
-                              languageMap[locale] || '${title}' || titleKey;
-                            tocSummary.textContent = translation;
-                          }
-                        }
-
-                        function toggleToc() {
-                          const tocTitle = window.parent.document.querySelector('.toc-title');
-                          if (tocTitle) {
-                            tocTitle.addEventListener('click', function () {
-                              tocTitle.classList.toggle('open');
-                            })
-                          }
-                        }
-
-                        window.addEventListener('load', function() {
-                          if (window.parent.document.readyState === 'complete') {
-                            syncTocTitle(currentLocale, languageMap);
-                            toggleToc();
-                          } else {
-                            window.parent.document.addEventListener('readystatechange', event => {
-                              if (event.target.readyState === 'complete') {
-                                syncTocTitle(currentLocale, languageMap);
-                                toggleToc();
-                              }
-                            });
-                          }
-                        });
-                      </script>
-                    &lt;/body&gt;
-                  &lt;/html&gt;">
-                </iframe>
-              `;
-
-              ctx.data.nodeStr = `
-                <div class="toc-wrapper"><style>${baseStyle +
-                (opt.globalStyle ?? "") +
-                (opt.listStyle === "decimal"
-                  ? `ul:has(> li) {
-                        list-style-type: none;
-                        counter-reset: toc-counter;
-                      }
-                      li {
-                        counter-increment: toc-counter;
-                      }
-                      .li-marker::before {
-                        content: counters(toc-counter, ".");
-                      }`
-                  : "") +
-                (opt.animation && animation !== undefined ?
-                  `.toc-wrapper {
-                        max-height: 2rem;
-                        transition: max-height ${animation.duration} ${animation.timingFunction};
-                      }
-                      .toc-wrapper:has(.toc-title.open) {
-                        max-height: 100vh;
-                      }
-                      ` : "") +
-                (opt.titleMarkerType === "icon" ?
-                  `
-                      .toc-title::before {
-                        content: '${closedMarker} ';
-                        display: contents;
-                        font-size: 1rem;
-                      }
-                      .toc-title.open::before {
-                        content: '${openedMarker} ';
-                        display: contents;
-                        font-size: 1rem;
-                      }
-                    ` : "") +
-                (opt.titleMarkerType === "image" ?
-                  `
-                      .toc-wrapper > .toc-title, .toc-wrapper > ul {
-                        margin-left: 2rem;
-                      }
-                      .toc-title::before {
-                        content: "";
-                        background: url('${closedMarker}') center / contain no-repeat;
-                        width: ${titleMarkerCssSize};
-                        height: ${titleMarkerCssSize};
-                        position: absolute;
-                        left: -2rem;
-                        top: 50%;
-                        transform: translateY(-50%);
-                      }
-                      .toc-title.open::before {
-                        content: "";
-                        background: url('${openedMarker}') center / contain no-repeat;
-                        width: ${titleMarkerCssSize};
-                        height: ${titleMarkerCssSize};
-                        position: absolute;
-                        left: -2rem;
-                        top: 50%;
-                        transform: translateY(-50%);
-                      }
-                    ` : "")
-                }</style><h2 data-satteri-toc-title="${title}" class="toc-title ${opt.class?.title ?? ""}" style="${opt.style?.title ?? ""}">${title}</h2>${collectedNodeStr}${iframeContent}</div>
-              `;
-
-              ctx.replaceNode(parent.children[ctx.data.firstHeadingIndex], {
-                type: "raw",
-                value:
-                  ctx.data.nodeStr +
-                  `<h${ctx.data.firstHeadingDepth} id="${ctx.data.firstHeadingId}">${ctx.data.firstHeading && ctx.textContent(ctx.data.firstHeading)}</h${ctx.data.firstHeadingDepth}>`,
-              });
-            }
           } catch (err) {
             throw err;
           }
         },
       },
     ],
+    before() {
+      headingTree = undefined;
+      firstHeading = {};
+    },
+    after(root, ctx) {
+      if (headingTree !== undefined) {
+        const collectedNodeStr = concatNodeStr(headingTree.rootNode, opt);
+        const baseStyle = `
+          .toc-wrapper {
+            display: grid;
+            grid-template-rows: 0fr;
+            overflow: hidden;
+            margin-bottom: 2rem;
+          }
+          .toc-wrapper:has(.toc-title.open) {
+            grid-template-rows: 1fr;
+          }
+          .toc-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin: 0 0 0.5rem 0;
+            width: fit-content;
+            position: relative;
+          }
+          ul {
+            padding-left: var(--list-indent, 1.5rem);
+            list-style-type: ${listStyle} ;
+            list-style-position: inside;
+          }
+          ul:not(:has(> li)) {
+            padding-left: 0;
+          }
+          @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+          }
+          li {
+            padding: 0;
+            line-height: 1.5rem;
+            font-size: 1rem;
+            animation: fadeIn 0.01s ease-in; // 防止页面刷新瞬间显示"0 javascript"
+          }
+          .li-marker {
+            display: inline-block;
+            margin-right: 0.5rem;
+          }
+          img.li-marker {
+            width: ${liMarkerCssSize};
+            height: ${liMarkerCssSize};
+            margin: 0 0.5rem 0 0;
+          }
+          .li-marker::before {
+            font-size: 1rem;
+            font-weight: 600;
+            width: ${liMarkerCssSize};
+            height: ${liMarkerCssSize};
+          }
+          /* 嵌套的 ul 内部，让缩进变量自动叠加 1rem */
+          ul ul {
+            --list-indent: calc(var(--list-indent, 1rem) + 1rem);
+          }
+          .li-row {
+            display: inline-flex;
+            flex-direction: row;
+            justify-content: flex-start;
+            align-items: center;
+          }
+          .li-row > img {
+            margin: 0 0.5rem 0 0;
+          }
+          .li-row > a {
+            text-decoration: none;
+          }
+          @media (hover: hover) {
+            .toc-title:hover {
+              color: ${lightThemeHighlightColor};
+              cursor: pointer;
+            }
+            html.dark .toc-title:hover {
+              color: ${darkThemeHighlightColor};
+            }
+            .li-row:hover {
+              color: ${lightThemeHighlightColor};
+            }
+            .li-row:hover > .li-marker::before {
+              color: ${lightThemeHighlightColor};
+            }
+            .li-row:hover > a {
+              color: ${lightThemeHighlightColor};
+            }
+            html.dark .li-row:hover {
+              color: ${darkThemeHighlightColor};
+            }
+            html.dark .li-row:hover > .li-marker::before {
+              color: ${darkThemeHighlightColor};
+            }
+            html.dark .li-row:hover > a {
+              color: ${darkThemeHighlightColor};
+            }
+          }
+          .toc-title:active {
+            color: ${lightThemeHighlightColor};
+            cursor: pointer;
+          }
+          html.dark .toc-title:active {
+            color: ${darkThemeHighlightColor};
+          }
+          .li-row:active {
+            color: ${lightThemeHighlightColor};
+          }
+          .li-row:active > .li-marker::before {
+            color: ${lightThemeHighlightColor};
+          }
+          .li-row:active > a {
+            color: ${lightThemeHighlightColor};
+          }
+          html.dark .li-row:active {
+            color: ${darkThemeHighlightColor};
+          }
+          html.dark .li-row:active > .li-marker::before {
+            color: ${darkThemeHighlightColor};
+          }
+          html.dark .li-row:active > a {
+            color: ${darkThemeHighlightColor};
+          }
+        `;
+
+        const iframeContent = `
+          <iframe
+            style="display:none;"
+            srcdoc="&lt;!DOCTYPE html&gt;
+              &lt;html&gt;
+              &lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;/head&gt;
+              &lt;body&gt;
+                <script is:inline data-astro-rerun>
+                  const currentLocale = window.parent.location.pathname.split('/')[1] || '${opt.locale || DEFALUT_LOCALE}';
+                  const languageMap = ${JSON.stringify(opt.languageMap).replaceAll('"', "'")} || ${JSON.stringify(DEFAULT_LANGUAGE_MAP).replaceAll('"', "'")};
+
+                  function syncTocTitle(
+                    locale,
+                    languageMap
+                  ) {
+                    const tocSummary = window.parent.document.querySelector('[data-satteri-toc-title]');
+
+                    if (tocSummary) {
+                      const titleKey = tocSummary.getAttribute('data-satteri-toc-title');
+                      const translation =
+                        languageMap[locale] || '${title}' || titleKey;
+                      tocSummary.textContent = translation;
+                    }
+                  }
+
+                  function toggleToc() {
+                    const tocTitle = window.parent.document.querySelector('.toc-title');
+                    if (tocTitle) {
+                      tocTitle.addEventListener('click', function () {
+                        tocTitle.classList.toggle('open');
+                      })
+                    }
+                  }
+
+                  window.addEventListener('load', function() {
+                    if (window.parent.document.readyState === 'complete') {
+                      syncTocTitle(currentLocale, languageMap);
+                      toggleToc();
+                    } else {
+                      window.parent.document.addEventListener('readystatechange', event => {
+                        if (event.target.readyState === 'complete') {
+                          syncTocTitle(currentLocale, languageMap);
+                          toggleToc();
+                        }
+                      });
+                    }
+                  });
+                </script>
+              &lt;/body&gt;
+            &lt;/html&gt;">
+          </iframe>
+        `;
+
+        const totalNodeStr = `
+          <div class="toc-wrapper"><style>${baseStyle +
+          (opt.globalStyle ?? "") +
+          (opt.listStyle === "decimal"
+            ? `ul:has(> li) {
+                  list-style-type: none;
+                  counter-reset: toc-counter;
+                }
+                li {
+                  counter-increment: toc-counter;
+                }
+                .li-marker::before {
+                  content: counters(toc-counter, ".");
+                }`
+            : "") +
+          (opt.animation && animation !== undefined && typeof animation !== 'boolean' ?
+            `.toc-wrapper {
+                  max-height: 2rem;
+                  transition: max-height ${animation.duration} ${animation.timingFunction};
+                }
+                .toc-wrapper:has(.toc-title.open) {
+                  max-height: 100vh;
+                }
+                ` : "") +
+          (opt.titleMarkerType === "icon" ?
+            `
+                .toc-title::before {
+                  content: '${closedMarker} ';
+                  display: contents;
+                  font-size: 1rem;
+                }
+                .toc-title.open::before {
+                  content: '${openedMarker} ';
+                  display: contents;
+                  font-size: 1rem;
+                }
+              ` : "") +
+          (opt.titleMarkerType === "image" ?
+            `
+                .toc-wrapper > .toc-title, .toc-wrapper > ul {
+                  margin-left: 2rem;
+                }
+                .toc-title::before {
+                  content: "";
+                  background: url('${closedMarker}') center / contain no-repeat;
+                  width: ${titleMarkerCssSize};
+                  height: ${titleMarkerCssSize};
+                  position: absolute;
+                  left: -2rem;
+                  top: 50%;
+                  transform: translateY(-50%);
+                }
+                .toc-title.open::before {
+                  content: "";
+                  background: url('${openedMarker}') center / contain no-repeat;
+                  width: ${titleMarkerCssSize};
+                  height: ${titleMarkerCssSize};
+                  position: absolute;
+                  left: -2rem;
+                  top: 50%;
+                  transform: translateY(-50%);
+                }
+              ` : "")
+          }</style><h2 data-satteri-toc-title="${title}" class="toc-title ${opt.class?.title ?? ""}" style="${opt.style?.title ?? ""}">${title}</h2>${collectedNodeStr}${iframeContent}</div>
+        `;
+
+        if (firstHeading.headingIndex !== undefined) {
+          ctx.replaceNode(root.children[firstHeading.headingIndex], {
+            type: "raw",
+            value:
+              totalNodeStr +
+              `<h${firstHeading.headingDepth} id="${firstHeading.headingId}">${firstHeading.headingText || ""}</h${firstHeading.headingDepth}>`,
+          });
+        }
+      }
+    },
   });
 }
 
