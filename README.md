@@ -50,7 +50,7 @@ deno add -D pretty-toc
 ```javascript
 import prettyToc from 'pretty-toc';
 
-// example
+// Basic example
 satteri({
   hastPlugins: [prettyToc({title: "Table of Contents", listStyle: "decimal"})]
 })
