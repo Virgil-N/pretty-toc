@@ -1,19 +1,24 @@
 import { defineHastPlugin, type HastPluginDefinition } from "satteri";
 import {
-  DEFAULT_OPTIONS,
-  DEFAULT_TITLE,
-  DEFAULT_OPENED_TITLE_MARKER,
-  DEFAULT_CLOSED_TITLE_MARKER,
-  DEFAULT_TITLE_MARKER_CSS_SIZE,
-  DEFAULT_LI_MARKER_CSS_SIZE,
-  DEFALUT_LOCALE,
-  DEFAULT_ANIMATION,
-  DEFAULT_LIGHT_THEME_HIGHLIGHT_COLOR,
-  DEFAULT_DARK_THEME_HIGHLIGHT_COLOR,
-  DEFAULT_LANGUAGE_MAP,
-  DEFAULT_LIST_STYLE
+    DEFAULT_OPTIONS,
+    DEFAULT_TITLE,
+    DEFAULT_OPENED_TITLE_MARKER,
+    DEFAULT_CLOSED_TITLE_MARKER,
+    DEFAULT_TITLE_MARKER_CSS_SIZE,
+    DEFAULT_LI_MARKER_CSS_SIZE,
+    DEFALUT_LOCALE,
+    DEFAULT_ANIMATION,
+    DEFAULT_LIGHT_THEME_HIGHLIGHT_COLOR,
+    DEFAULT_DARK_THEME_HIGHLIGHT_COLOR,
+    DEFAULT_LANGUAGE_MAP,
+    DEFAULT_LIST_STYLE,
 } from "./const";
-import type { HastOption, CUSTOM_HEADING, CUSTOM_NODE, NODE_TREE } from "../basic";
+import type {
+    HastOption,
+    CUSTOM_HEADING,
+    CUSTOM_NODE,
+    NODE_TREE,
+} from "../basic";
 import notFoundImg from "./assets/svg/image-not-found.svg";
 import slug from "slug";
 
@@ -23,268 +28,320 @@ import slug from "slug";
  * @returns 插件实例
  */
 function prettyToc(option?: HastOption): HastPluginDefinition {
-  const opt = option ?? DEFAULT_OPTIONS;
-  const lightThemeHighlightColor =
-    opt.lightThemeHighlightColor || DEFAULT_LIGHT_THEME_HIGHLIGHT_COLOR;
-  const darkThemeHighlightColor =
-    opt.darkThemeHighlightColor || DEFAULT_DARK_THEME_HIGHLIGHT_COLOR;
-  const titleMarkerCssSize = opt.titleMarkerCssSize || DEFAULT_TITLE_MARKER_CSS_SIZE;
-  const openedMarker = opt.openedMarker || DEFAULT_OPENED_TITLE_MARKER;
-  const closedMarker = opt.closedMarker || DEFAULT_CLOSED_TITLE_MARKER;
-  const liMarkerCssSize = opt.liMarkerCssSize || DEFAULT_LI_MARKER_CSS_SIZE;
+    const opt = option ?? DEFAULT_OPTIONS;
+    const lightThemeHighlightColor =
+        opt.lightThemeHighlightColor || DEFAULT_LIGHT_THEME_HIGHLIGHT_COLOR;
+    const darkThemeHighlightColor =
+        opt.darkThemeHighlightColor || DEFAULT_DARK_THEME_HIGHLIGHT_COLOR;
+    const titleMarkerCssSize =
+        opt.titleMarkerCssSize || DEFAULT_TITLE_MARKER_CSS_SIZE;
+    const openedMarker = opt.openedMarker || DEFAULT_OPENED_TITLE_MARKER;
+    const closedMarker = opt.closedMarker || DEFAULT_CLOSED_TITLE_MARKER;
+    const liMarkerCssSize = opt.liMarkerCssSize || DEFAULT_LI_MARKER_CSS_SIZE;
 
-  let title = opt.title || DEFAULT_TITLE;
-  let listStyle = DEFAULT_LIST_STYLE;
-  let animation: boolean | { duration: string, timingFunction: string } | undefined = undefined;
+    let title = opt.title || DEFAULT_TITLE;
+    let listStyle = DEFAULT_LIST_STYLE;
+    let animation:
+        boolean | { duration: string; timingFunction: string } | undefined =
+        undefined;
 
-  let headingTree: NODE_TREE | undefined = undefined;
-  let firstHeading: CUSTOM_HEADING = {};
+    let headingTree: NODE_TREE | undefined = undefined;
+    let firstHeading: CUSTOM_HEADING = {};
 
-  return defineHastPlugin({
-    name: "prettyToc",
-    element: [
-      {
-        filter: ["h1", "h2", "h3", "h4", "h5", "h6"],
-        visit(node, ctx) {
-          try {
-            const depth = parseInt(node.tagName.slice(-1), 10);
-            const content = ctx.textContent(node);
-            const contentSlug = slug(content) + new Date().getTime();
+    return defineHastPlugin({
+        name: "prettyToc",
+        element: [
+            {
+                filter: ["h1", "h2", "h3", "h4", "h5", "h6"],
+                visit(node, ctx) {
+                    try {
+                        const depth = parseInt(node.tagName.slice(-1), 10);
+                        const content = ctx.textContent(node);
+                        const contentSlug =
+                            slug(content) + new Date().getTime();
 
-            if (opt.languageMap) {
-              title = opt.languageMap[opt.locale ?? DEFALUT_LOCALE] || DEFAULT_TITLE;
-            } else {
-              title = DEFAULT_LANGUAGE_MAP[opt.locale ?? DEFALUT_LOCALE] || DEFAULT_TITLE;
-            }
+                        if (opt.languageMap) {
+                            title =
+                                opt.languageMap[opt.locale ?? DEFALUT_LOCALE] ||
+                                DEFAULT_TITLE;
+                        } else {
+                            title =
+                                DEFAULT_LANGUAGE_MAP[
+                                    opt.locale ?? DEFALUT_LOCALE
+                                ] || DEFAULT_TITLE;
+                        }
 
-            if (opt.listStyle === "icon" || opt.listStyle === "image" || opt.listStyle === "decimal") {
-              listStyle = "none";
-            } else if (opt.listStyle !== undefined) {
-              listStyle = opt.listStyle;
-            }
+                        if (
+                            opt.listStyle === "icon" ||
+                            opt.listStyle === "image" ||
+                            opt.listStyle === "decimal"
+                        ) {
+                            listStyle = "none";
+                        } else if (opt.listStyle !== undefined) {
+                            listStyle = opt.listStyle;
+                        }
 
-            if (typeof opt.animation === "object" && opt.animation !== undefined) {
-              animation = opt.animation ?? DEFAULT_ANIMATION;
-            } else if (opt.animation === true) {
-              animation = DEFAULT_ANIMATION;
-            } else {
-              animation = undefined;
-            }
+                        if (
+                            typeof opt.animation === "object" &&
+                            opt.animation !== undefined
+                        ) {
+                            animation = opt.animation ?? DEFAULT_ANIMATION;
+                        } else if (opt.animation === true) {
+                            animation = DEFAULT_ANIMATION;
+                        } else {
+                            animation = undefined;
+                        }
 
-            let marker = "";
-            let icon = "🍎";
-            let image = notFoundImg;
+                        let marker = "";
+                        let icon = "🍎";
+                        let image = notFoundImg;
 
-            if (opt.icon && typeof opt.icon === "string") {
-              icon = opt.icon;
-            } else if (Array.isArray(opt.icon)) {
-              icon = opt.icon[depth - 1] ?? "🍎";
-            }
+                        if (opt.icon && typeof opt.icon === "string") {
+                            icon = opt.icon;
+                        } else if (Array.isArray(opt.icon)) {
+                            icon = opt.icon[depth - 1] ?? "🍎";
+                        }
 
-            if (opt.image && typeof opt.image === "string") {
-              image = opt.image;
-            } else if (Array.isArray(opt.image)) {
-              image = opt.image[depth - 1] ?? notFoundImg;
-            }
+                        if (opt.image && typeof opt.image === "string") {
+                            image = opt.image;
+                        } else if (Array.isArray(opt.image)) {
+                            image = opt.image[depth - 1] ?? notFoundImg;
+                        }
 
-            switch (opt.listStyle) {
-              case "icon":
-                marker = `<span class='li-marker'>${icon}</span>`;
-                break;
-              case "image":
-                marker = `<img class='li-marker' src="${image}" alt='icon' />`;
-                break;
-              case "decimal":
-                marker = "<span class='li-marker'></span>";
-                break;
-              default:
-                marker = "";
-            }
+                        switch (opt.listStyle) {
+                            case "icon":
+                                marker = `<span class='li-marker'>${icon}</span>`;
+                                break;
+                            case "image":
+                                marker = `<img class='li-marker' src="${image}" alt='icon' />`;
+                                break;
+                            case "decimal":
+                                marker = "<span class='li-marker'></span>";
+                                break;
+                            default:
+                                marker = "";
+                        }
 
-            let nodeStr = `<li id="li-${contentSlug}" class="${opt.class?.li ?? ""}" style="${opt.style?.li ?? ""}" data-depth=${depth}><div class="li-row">${marker}<a href="#${contentSlug}" class="${opt.class?.a ?? ""}" style="${opt.style?.a ?? ""}">${content}</a></div></li>`;
+                        let nodeStr = `<li id="li-${contentSlug}" class="${opt.class?.li ?? ""}" style="${opt.style?.li ?? ""}" data-depth=${depth}><div class="li-row">${marker}<a href="#${contentSlug}" class="${opt.class?.a ?? ""}" style="${opt.style?.a ?? ""}">${content}</a></div></li>`;
 
-            ctx.setProperty(node, "id", contentSlug);
+                        ctx.setProperty(node, "id", contentSlug);
 
-            if (headingTree === undefined) {
-              firstHeading.headingText = ctx.textContent(node);
-              firstHeading.headingDepth = depth;
-              firstHeading.headingId = contentSlug;
-              firstHeading.headingIndex = ctx.indexOf(node) ?? 0;
+                        if (headingTree === undefined) {
+                            firstHeading.headingText = ctx.textContent(node);
+                            firstHeading.headingDepth = depth;
+                            firstHeading.headingId = contentSlug;
+                            firstHeading.headingIndex = ctx.indexOf(node) ?? 0;
 
-              const rootNode: CUSTOM_NODE = { depth: 0, content: '', children: [], parent: undefined };
-              headingTree = {
-                rootNode,
-                previousNode: rootNode
-              };
-              if (depth === 1) {
-                const currentNode = { depth: 1, content: nodeStr, children: [], parent: rootNode };
-                headingTree.rootNode.children.push(currentNode);
-                headingTree.previousNode = currentNode;
-              } else {
-                for (let i = 1; i <= depth; i++) {
-                  const currentNode = { depth: i, content: (i === depth) ? nodeStr : '', children: [], parent: headingTree.previousNode };
-                  headingTree.previousNode.children.push(currentNode);
-                  headingTree.previousNode = currentNode;
-                }
-              }
-            } else {
-              let hasFound = false;
-              let nextSearchNode = headingTree.rootNode;
+                            const rootNode: CUSTOM_NODE = {
+                                depth: 0,
+                                content: "",
+                                children: [],
+                                parent: undefined,
+                            };
+                            headingTree = {
+                                rootNode,
+                                previousNode: rootNode,
+                            };
+                            if (depth === 1) {
+                                const currentNode = {
+                                    depth: 1,
+                                    content: nodeStr,
+                                    children: [],
+                                    parent: rootNode,
+                                };
+                                headingTree.rootNode.children.push(currentNode);
+                                headingTree.previousNode = currentNode;
+                            } else {
+                                for (let i = 1; i <= depth; i++) {
+                                    const currentNode = {
+                                        depth: i,
+                                        content: i === depth ? nodeStr : "",
+                                        children: [],
+                                        parent: headingTree.previousNode,
+                                    };
+                                    headingTree.previousNode.children.push(
+                                        currentNode,
+                                    );
+                                    headingTree.previousNode = currentNode;
+                                }
+                            }
+                        } else {
+                            let hasFound = false;
+                            let nextSearchNode = headingTree.rootNode;
 
-              searchNode: while (!hasFound) {
-                if (nextSearchNode.depth + 1 === depth) {
-                  const currentNode = { depth: depth, content: nodeStr, children: [], parent: nextSearchNode }
-                  nextSearchNode.children.push(currentNode);
-                  headingTree.previousNode = currentNode;
-                  hasFound = true;
-                  break searchNode;
-                } else {
-                  if (nextSearchNode.children.length > 0) {
-                    nextSearchNode = nextSearchNode.children[nextSearchNode.children.length - 1];
-                    continue searchNode;
-                  } else {
-                    const middleNode = { depth: nextSearchNode.depth + 1, content: "", children: [], parent: nextSearchNode };
-                    nextSearchNode.children.push(middleNode);
-                    nextSearchNode = middleNode;
-                    continue searchNode;
-                  }
-                }
-              }
-            }
-          } catch (err) {
-            throw err;
-          }
+                            searchNode: while (!hasFound) {
+                                if (nextSearchNode.depth + 1 === depth) {
+                                    const currentNode = {
+                                        depth: depth,
+                                        content: nodeStr,
+                                        children: [],
+                                        parent: nextSearchNode,
+                                    };
+                                    nextSearchNode.children.push(currentNode);
+                                    headingTree.previousNode = currentNode;
+                                    hasFound = true;
+                                    break searchNode;
+                                } else {
+                                    if (nextSearchNode.children.length > 0) {
+                                        nextSearchNode =
+                                            nextSearchNode.children[
+                                                nextSearchNode.children.length -
+                                                    1
+                                            ];
+                                        continue searchNode;
+                                    } else {
+                                        const middleNode = {
+                                            depth: nextSearchNode.depth + 1,
+                                            content: "",
+                                            children: [],
+                                            parent: nextSearchNode,
+                                        };
+                                        nextSearchNode.children.push(
+                                            middleNode,
+                                        );
+                                        nextSearchNode = middleNode;
+                                        continue searchNode;
+                                    }
+                                }
+                            }
+                        }
+                    } catch (err) {
+                        throw err;
+                    }
+                },
+            },
+        ],
+        before() {
+            headingTree = undefined;
+            firstHeading = {};
         },
-      },
-    ],
-    before() {
-      headingTree = undefined;
-      firstHeading = {};
-    },
-    after(root, ctx) {
-      if (headingTree !== undefined) {
-        const collectedNodeStr = concatNodeStr(headingTree.rootNode, opt);
-        const baseStyle = `
+        after(root, ctx) {
+            if (headingTree !== undefined) {
+                const collectedNodeStr = concatNodeStr(
+                    headingTree.rootNode,
+                    opt,
+                );
+                const baseStyle = `
           .toc-wrapper {
             display: grid;
             grid-template-rows: 0fr;
             overflow: hidden;
             margin-bottom: 2rem;
-          }
-          .toc-wrapper:has(.toc-title.open) {
-            grid-template-rows: 1fr;
-          }
-          .toc-title {
-            font-size: 1.2rem;
-            font-weight: 600;
-            margin: 0 0 0.5rem 0;
-            width: fit-content;
-            position: relative;
-          }
-          ul {
-            padding-left: var(--list-indent, 1.5rem);
-            list-style-type: ${listStyle} ;
-            list-style-position: inside;
-          }
-          ul:not(:has(> li)) {
-            padding-left: 0;
-          }
-          @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-          }
-          li {
-            padding: 0;
-            line-height: 1.5rem;
-            font-size: 1rem;
-            animation: fadeIn 0.01s ease-in; // 防止页面刷新瞬间显示"0 javascript"
-          }
-          .li-marker {
-            display: inline-block;
-            margin-right: 0.5rem;
-          }
-          img.li-marker {
-            width: ${liMarkerCssSize};
-            height: ${liMarkerCssSize};
-            margin: 0 0.5rem 0 0;
-          }
-          .li-marker::before {
-            font-size: 1rem;
-            font-weight: 600;
-            width: ${liMarkerCssSize};
-            height: ${liMarkerCssSize};
-          }
-          /* 嵌套的 ul 内部，让缩进变量自动叠加 1rem */
-          ul ul {
-            --list-indent: calc(var(--list-indent, 1rem) + 1rem);
-          }
-          .li-row {
-            display: inline-flex;
-            flex-direction: row;
-            justify-content: flex-start;
-            align-items: center;
-          }
-          .li-row > img {
-            margin: 0 0.5rem 0 0;
-          }
-          .li-row > a {
-            text-decoration: none;
+            &:has(.toc-title.open) {
+              grid-template-rows: 1fr;
+            }
+            .toc-title {
+              font-size: 1.2rem;
+              font-weight: 600;
+              margin: 0 0 0.5rem 0;
+              width: fit-content;
+              position: relative;
+            }
+            ul {
+              padding-left: var(--list-indent, 1.5rem);
+              list-style-type: ${listStyle} ;
+              list-style-position: inside;
+            }
+            ul:not(:has(> li)) {
+              padding-left: 0;
+            }
+            @keyframes fadeIn {
+              from { opacity: 0; }
+              to { opacity: 1; }
+            }
+            li {
+              padding: 0;
+              line-height: 1.5rem;
+              font-size: 1rem;
+              animation: fadeIn 0.01s ease-in; // 防止页面刷新瞬间显示"0 javascript"
+            }
+            .li-marker {
+              display: inline-block;
+              margin-right: 0.5rem;
+            }
+            img.li-marker {
+              width: ${liMarkerCssSize};
+              height: ${liMarkerCssSize};
+              margin: 0 0.5rem 0 0;
+            }
+            .li-marker::before {
+              font-size: 1rem;
+              font-weight: 600;
+              width: ${liMarkerCssSize};
+              height: ${liMarkerCssSize};
+            }
+            /* 嵌套的 ul 内部，让缩进变量自动叠加 1rem */
+            ul ul {
+              --list-indent: calc(var(--list-indent, 1rem) + 1rem);
+            }
+            .li-row {
+              display: inline-flex;
+              flex-direction: row;
+              justify-content: flex-start;
+              align-items: center;
+            }
+            .li-row > img {
+              margin: 0 0.5rem 0 0;
+            }
+            .li-row > a {
+              text-decoration: none;
+            }
           }
           @media (hover: hover) {
-            .toc-title:hover {
+            .toc-wrapper .toc-title:hover {
               color: ${lightThemeHighlightColor};
               cursor: pointer;
             }
-            html.dark .toc-title:hover {
+            html.dark .toc-wrapper .toc-title:hover {
               color: ${darkThemeHighlightColor};
             }
-            .li-row:hover {
+            .toc-wrapper .li-row:hover {
               color: ${lightThemeHighlightColor};
             }
-            .li-row:hover > .li-marker::before {
+            .toc-wrapper .li-row:hover > .li-marker::before {
               color: ${lightThemeHighlightColor};
             }
-            .li-row:hover > a {
+            .toc-wrapper .li-row:hover > a {
               color: ${lightThemeHighlightColor};
             }
-            html.dark .li-row:hover {
+            html.dark .toc-wrapper .li-row:hover {
               color: ${darkThemeHighlightColor};
             }
-            html.dark .li-row:hover > .li-marker::before {
+            html.dark .toc-wrapper .li-row:hover > .li-marker::before {
               color: ${darkThemeHighlightColor};
             }
-            html.dark .li-row:hover > a {
+            html.dark .toc-wrapper .li-row:hover > a {
               color: ${darkThemeHighlightColor};
             }
           }
-          .toc-title:active {
+          .toc-wrapper .toc-title:active {
             color: ${lightThemeHighlightColor};
             cursor: pointer;
           }
-          html.dark .toc-title:active {
+          html.dark .toc-wrapper .toc-title:active {
             color: ${darkThemeHighlightColor};
           }
-          .li-row:active {
+          .toc-wrapper .li-row:active {
             color: ${lightThemeHighlightColor};
           }
-          .li-row:active > .li-marker::before {
+          .toc-wrapper .li-row:active > .li-marker::before {
             color: ${lightThemeHighlightColor};
           }
-          .li-row:active > a {
+          .toc-wrapper .li-row:active > a {
             color: ${lightThemeHighlightColor};
           }
-          html.dark .li-row:active {
+          html.dark .toc-wrapper .li-row:active {
             color: ${darkThemeHighlightColor};
           }
-          html.dark .li-row:active > .li-marker::before {
+          html.dark .toc-wrapper .li-row:active > .li-marker::before {
             color: ${darkThemeHighlightColor};
           }
-          html.dark .li-row:active > a {
+          html.dark .toc-wrapper .li-row:active > a {
             color: ${darkThemeHighlightColor};
           }
         `;
 
-        const iframeContent = `
+                const iframeContent = `
           <iframe
             style="display:none;"
             srcdoc="&lt;!DOCTYPE html&gt;
@@ -337,49 +394,54 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
           </iframe>
         `;
 
-        const totalNodeStr = `
-          <div class="toc-wrapper"><style>${baseStyle +
-          (opt.globalStyle ?? "") +
-          (opt.listStyle === "decimal"
-            ? `ul:has(> li) {
+                const totalNodeStr = `
+          <div class="toc-wrapper"><style>${
+              baseStyle +
+              (opt.globalStyle ?? "") +
+              (opt.listStyle === "decimal"
+                  ? `.toc-wrapper ul:has(> li) {
                   list-style-type: none;
                   counter-reset: toc-counter;
                 }
-                li {
+                .toc-wrapper li {
                   counter-increment: toc-counter;
                 }
-                .li-marker::before {
+                .toc-wrapper .li-marker::before {
                   content: counters(toc-counter, ".");
                 }`
-            : "") +
-          (opt.animation && animation !== undefined && typeof animation !== 'boolean' ?
-            `.toc-wrapper {
+                  : "") +
+              (opt.animation &&
+              animation !== undefined &&
+              typeof animation !== "boolean"
+                  ? `.toc-wrapper {
                   max-height: 2rem;
                   transition: max-height ${animation.duration} ${animation.timingFunction};
                 }
                 .toc-wrapper:has(.toc-title.open) {
                   max-height: 100vh;
                 }
-                ` : "") +
-          (opt.titleMarkerType === "icon" ?
-            `
-                .toc-title::before {
+                `
+                  : "") +
+              (opt.titleMarkerType === "icon"
+                  ? `
+                .toc-wrapper .toc-title::before {
                   content: '${closedMarker} ';
                   display: contents;
                   font-size: 1rem;
                 }
-                .toc-title.open::before {
+                .toc-wrapper .toc-title.open::before {
                   content: '${openedMarker} ';
                   display: contents;
                   font-size: 1rem;
                 }
-              ` : "") +
-          (opt.titleMarkerType === "image" ?
-            `
+              `
+                  : "") +
+              (opt.titleMarkerType === "image"
+                  ? `
                 .toc-wrapper > .toc-title, .toc-wrapper > ul {
                   margin-left: 2rem;
                 }
-                .toc-title::before {
+                .toc-wrapper .toc-title::before {
                   content: "";
                   background: url('${closedMarker}') center / contain no-repeat;
                   width: ${titleMarkerCssSize};
@@ -389,7 +451,7 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
                   top: 50%;
                   transform: translateY(-50%);
                 }
-                .toc-title.open::before {
+                .toc-wrapper .toc-title.open::before {
                   content: "";
                   background: url('${openedMarker}') center / contain no-repeat;
                   width: ${titleMarkerCssSize};
@@ -399,21 +461,22 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
                   top: 50%;
                   transform: translateY(-50%);
                 }
-              ` : "")
+              `
+                  : "")
           }</style><h2 data-satteri-toc-title="${title}" class="toc-title ${opt.class?.title ?? ""}" style="${opt.style?.title ?? ""}">${title}</h2>${collectedNodeStr}${iframeContent}</div>
         `;
 
-        if (firstHeading.headingIndex !== undefined) {
-          ctx.replaceNode(root.children[firstHeading.headingIndex], {
-            type: "raw",
-            value:
-              totalNodeStr +
-              `<h${firstHeading.headingDepth} id="${firstHeading.headingId}">${firstHeading.headingText || ""}</h${firstHeading.headingDepth}>`,
-          });
-        }
-      }
-    },
-  });
+                if (firstHeading.headingIndex !== undefined) {
+                    ctx.replaceNode(root.children[firstHeading.headingIndex], {
+                        type: "raw",
+                        value:
+                            totalNodeStr +
+                            `<h${firstHeading.headingDepth} id="${firstHeading.headingId}">${firstHeading.headingText || ""}</h${firstHeading.headingDepth}>`,
+                    });
+                }
+            }
+        },
+    });
 }
 
 /**
@@ -423,14 +486,14 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
  * @returns 所有节点的html内容字符串
  */
 function concatNodeStr(node: CUSTOM_NODE, opt: HastOption): string {
-  let childNodeStr = ""
-  if (node.children.length > 0) {
-    for (let i = 0; i < node.children.length; i++) {
-      childNodeStr += concatNodeStr(node.children[i], opt);
+    let childNodeStr = "";
+    if (node.children.length > 0) {
+        for (let i = 0; i < node.children.length; i++) {
+            childNodeStr += concatNodeStr(node.children[i], opt);
+        }
+        childNodeStr = `<ul class="${opt.class?.ul ?? ""}" style="${opt.style?.ul ?? ""}">${childNodeStr}</ul>`;
+        return node.content + childNodeStr;
     }
-    childNodeStr = `<ul class="${opt.class?.ul ?? ""}" style="${opt.style?.ul ?? ""}">${childNodeStr}</ul>`;
-    return node.content + childNodeStr;
-  }
-  return node.content;
+    return node.content;
 }
 export default prettyToc;
