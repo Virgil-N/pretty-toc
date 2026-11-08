@@ -416,12 +416,12 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
                 .toc-wrapper .toc-title::before {
                   content: '${closedMarker} ';
                   display: contents;
-                  font-size: 1rem;
+                  font-size: 1.2rem;
                 }
                 .toc-wrapper .toc-title.open::before {
                   content: '${openedMarker} ';
                   display: contents;
-                  font-size: 1rem;
+                  font-size: 1.2rem;
                 }
               `
               : "") +
