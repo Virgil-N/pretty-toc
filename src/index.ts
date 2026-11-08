@@ -1,23 +1,23 @@
 import { defineHastPlugin, type HastPluginDefinition } from "satteri";
 import {
-    DEFAULT_OPTIONS,
-    DEFAULT_TITLE,
-    DEFAULT_OPENED_TITLE_MARKER,
-    DEFAULT_CLOSED_TITLE_MARKER,
-    DEFAULT_TITLE_MARKER_CSS_SIZE,
-    DEFAULT_LI_MARKER_CSS_SIZE,
-    DEFALUT_LOCALE,
-    DEFAULT_ANIMATION,
-    DEFAULT_LIGHT_THEME_HIGHLIGHT_COLOR,
-    DEFAULT_DARK_THEME_HIGHLIGHT_COLOR,
-    DEFAULT_LANGUAGE_MAP,
-    DEFAULT_LIST_STYLE,
+  DEFAULT_OPTIONS,
+  DEFAULT_TITLE,
+  DEFAULT_OPENED_TITLE_MARKER,
+  DEFAULT_CLOSED_TITLE_MARKER,
+  DEFAULT_TITLE_MARKER_CSS_SIZE,
+  DEFAULT_LI_MARKER_CSS_SIZE,
+  DEFALUT_LOCALE,
+  DEFAULT_ANIMATION,
+  DEFAULT_LIGHT_THEME_HIGHLIGHT_COLOR,
+  DEFAULT_DARK_THEME_HIGHLIGHT_COLOR,
+  DEFAULT_LANGUAGE_MAP,
+  DEFAULT_LIST_STYLE,
 } from "./const";
 import type {
-    HastOption,
-    CUSTOM_HEADING,
-    CUSTOM_NODE,
-    NODE_TREE,
+  HastOption,
+  CUSTOM_HEADING,
+  CUSTOM_NODE,
+  NODE_TREE,
 } from "../basic";
 import notFoundImg from "./assets/svg/image-not-found.svg";
 import slug from "slug";
@@ -28,200 +28,189 @@ import slug from "slug";
  * @returns 插件实例
  */
 function prettyToc(option?: HastOption): HastPluginDefinition {
-    const opt = option ?? DEFAULT_OPTIONS;
-    const lightThemeHighlightColor =
-        opt.lightThemeHighlightColor || DEFAULT_LIGHT_THEME_HIGHLIGHT_COLOR;
-    const darkThemeHighlightColor =
-        opt.darkThemeHighlightColor || DEFAULT_DARK_THEME_HIGHLIGHT_COLOR;
-    const titleMarkerCssSize =
-        opt.titleMarkerCssSize || DEFAULT_TITLE_MARKER_CSS_SIZE;
-    const openedMarker = opt.openedMarker || DEFAULT_OPENED_TITLE_MARKER;
-    const closedMarker = opt.closedMarker || DEFAULT_CLOSED_TITLE_MARKER;
-    const liMarkerCssSize = opt.liMarkerCssSize || DEFAULT_LI_MARKER_CSS_SIZE;
+  const opt = option ?? DEFAULT_OPTIONS;
+  const lightThemeHighlightColor =
+    opt.lightThemeHighlightColor || DEFAULT_LIGHT_THEME_HIGHLIGHT_COLOR;
+  const darkThemeHighlightColor =
+    opt.darkThemeHighlightColor || DEFAULT_DARK_THEME_HIGHLIGHT_COLOR;
+  const titleMarkerCssSize =
+    opt.titleMarkerCssSize || DEFAULT_TITLE_MARKER_CSS_SIZE;
+  const openedMarker = opt.openedMarker || DEFAULT_OPENED_TITLE_MARKER;
+  const closedMarker = opt.closedMarker || DEFAULT_CLOSED_TITLE_MARKER;
+  const liMarkerCssSize = opt.liMarkerCssSize || DEFAULT_LI_MARKER_CSS_SIZE;
 
-    let title = opt.title || DEFAULT_TITLE;
-    let listStyle = DEFAULT_LIST_STYLE;
-    let animation:
-        boolean | { duration: string; timingFunction: string } | undefined =
-        undefined;
+  let title = opt.title || DEFAULT_TITLE;
+  let listStyle = DEFAULT_LIST_STYLE;
+  let animation:
+    boolean | { duration: string; timingFunction: string } | undefined =
+    undefined;
 
-    let headingTree: NODE_TREE | undefined = undefined;
-    let firstHeading: CUSTOM_HEADING = {};
+  let headingTree: NODE_TREE | undefined = undefined;
+  let firstHeading: CUSTOM_HEADING = {};
 
-    return defineHastPlugin({
-        name: "prettyToc",
-        element: [
-            {
-                filter: ["h1", "h2", "h3", "h4", "h5", "h6"],
-                visit(node, ctx) {
-                    try {
-                        const depth = parseInt(node.tagName.slice(-1), 10);
-                        const content = ctx.textContent(node);
-                        const contentSlug =
-                            slug(content) + new Date().getTime();
+  return defineHastPlugin({
+    name: "prettyToc",
+    element: [
+      {
+        filter: ["h1", "h2", "h3", "h4", "h5", "h6"],
+        visit(node, ctx) {
+          try {
+            const depth = parseInt(node.tagName.slice(-1), 10);
+            const content = ctx.textContent(node);
+            const contentSlug = slug(content) + new Date().getTime();
 
-                        if (opt.languageMap) {
-                            title =
-                                opt.languageMap[opt.locale ?? DEFALUT_LOCALE] ||
-                                DEFAULT_TITLE;
-                        } else {
-                            title =
-                                DEFAULT_LANGUAGE_MAP[
-                                    opt.locale ?? DEFALUT_LOCALE
-                                ] || DEFAULT_TITLE;
-                        }
+            if (opt.languageMap) {
+              title =
+                opt.languageMap[opt.locale ?? DEFALUT_LOCALE] || DEFAULT_TITLE;
+            } else {
+              title =
+                DEFAULT_LANGUAGE_MAP[opt.locale ?? DEFALUT_LOCALE] ||
+                DEFAULT_TITLE;
+            }
 
-                        if (
-                            opt.listStyle === "icon" ||
-                            opt.listStyle === "image" ||
-                            opt.listStyle === "decimal"
-                        ) {
-                            listStyle = "none";
-                        } else if (opt.listStyle !== undefined) {
-                            listStyle = opt.listStyle;
-                        }
+            if (
+              opt.listStyle === "icon" ||
+              opt.listStyle === "image" ||
+              opt.listStyle === "decimal"
+            ) {
+              listStyle = "none";
+            } else if (opt.listStyle !== undefined) {
+              listStyle = opt.listStyle;
+            }
 
-                        if (
-                            typeof opt.animation === "object" &&
-                            opt.animation !== undefined
-                        ) {
-                            animation = opt.animation ?? DEFAULT_ANIMATION;
-                        } else if (opt.animation === true) {
-                            animation = DEFAULT_ANIMATION;
-                        } else {
-                            animation = undefined;
-                        }
+            if (
+              typeof opt.animation === "object" &&
+              opt.animation !== undefined
+            ) {
+              animation = opt.animation ?? DEFAULT_ANIMATION;
+            } else if (opt.animation === true) {
+              animation = DEFAULT_ANIMATION;
+            } else {
+              animation = undefined;
+            }
 
-                        let marker = "";
-                        let icon = "🍎";
-                        let image = notFoundImg;
+            let marker = "";
+            let icon = "🍎";
+            let image = notFoundImg;
 
-                        if (opt.icon && typeof opt.icon === "string") {
-                            icon = opt.icon;
-                        } else if (Array.isArray(opt.icon)) {
-                            icon = opt.icon[depth - 1] ?? "🍎";
-                        }
+            if (opt.icon && typeof opt.icon === "string") {
+              icon = opt.icon;
+            } else if (Array.isArray(opt.icon)) {
+              icon = opt.icon[depth - 1] ?? "🍎";
+            }
 
-                        if (opt.image && typeof opt.image === "string") {
-                            image = opt.image;
-                        } else if (Array.isArray(opt.image)) {
-                            image = opt.image[depth - 1] ?? notFoundImg;
-                        }
+            if (opt.image && typeof opt.image === "string") {
+              image = opt.image;
+            } else if (Array.isArray(opt.image)) {
+              image = opt.image[depth - 1] ?? notFoundImg;
+            }
 
-                        switch (opt.listStyle) {
-                            case "icon":
-                                marker = `<span class='li-marker'>${icon}</span>`;
-                                break;
-                            case "image":
-                                marker = `<img class='li-marker' src="${image}" alt='icon' />`;
-                                break;
-                            case "decimal":
-                                marker = "<span class='li-marker'></span>";
-                                break;
-                            default:
-                                marker = "";
-                        }
+            switch (opt.listStyle) {
+              case "icon":
+                marker = `<span class='li-marker'>${icon}</span>`;
+                break;
+              case "image":
+                marker = `<img class='li-marker' src="${image}" alt='icon' />`;
+                break;
+              case "decimal":
+                marker = "<span class='li-marker'></span>";
+                break;
+              default:
+                marker = "";
+            }
 
-                        let nodeStr = `<li id="li-${contentSlug}" class="${opt.class?.li ?? ""}" style="${opt.style?.li ?? ""}" data-depth=${depth}><div class="li-row">${marker}<a href="#${contentSlug}" class="${opt.class?.a ?? ""}" style="${opt.style?.a ?? ""}">${content}</a></div></li>`;
+            let nodeStr = `<li id="li-${contentSlug}" class="${opt.class?.li ?? ""}" style="${opt.style?.li ?? ""}" data-depth=${depth}><div class="li-row">${marker}<a href="#${contentSlug}" class="${opt.class?.a ?? ""}" style="${opt.style?.a ?? ""}">${content}</a></div></li>`;
 
-                        ctx.setProperty(node, "id", contentSlug);
+            ctx.setProperty(node, "id", contentSlug);
 
-                        if (headingTree === undefined) {
-                            firstHeading.headingText = ctx.textContent(node);
-                            firstHeading.headingDepth = depth;
-                            firstHeading.headingId = contentSlug;
-                            firstHeading.headingIndex = ctx.indexOf(node) ?? 0;
+            if (headingTree === undefined) {
+              firstHeading.headingText = ctx.textContent(node);
+              firstHeading.headingDepth = depth;
+              firstHeading.headingId = contentSlug;
+              firstHeading.headingIndex = ctx.indexOf(node) ?? 0;
 
-                            const rootNode: CUSTOM_NODE = {
-                                depth: 0,
-                                content: "",
-                                children: [],
-                                parent: undefined,
-                            };
-                            headingTree = {
-                                rootNode,
-                                previousNode: rootNode,
-                            };
-                            if (depth === 1) {
-                                const currentNode = {
-                                    depth: 1,
-                                    content: nodeStr,
-                                    children: [],
-                                    parent: rootNode,
-                                };
-                                headingTree.rootNode.children.push(currentNode);
-                                headingTree.previousNode = currentNode;
-                            } else {
-                                for (let i = 1; i <= depth; i++) {
-                                    const currentNode = {
-                                        depth: i,
-                                        content: i === depth ? nodeStr : "",
-                                        children: [],
-                                        parent: headingTree.previousNode,
-                                    };
-                                    headingTree.previousNode.children.push(
-                                        currentNode,
-                                    );
-                                    headingTree.previousNode = currentNode;
-                                }
-                            }
-                        } else {
-                            let hasFound = false;
-                            let nextSearchNode = headingTree.rootNode;
+              const rootNode: CUSTOM_NODE = {
+                depth: 0,
+                content: "",
+                children: [],
+                parent: undefined,
+              };
+              headingTree = {
+                rootNode,
+                previousNode: rootNode,
+              };
+              if (depth === 1) {
+                const currentNode = {
+                  depth: 1,
+                  content: nodeStr,
+                  children: [],
+                  parent: rootNode,
+                };
+                headingTree.rootNode.children.push(currentNode);
+                headingTree.previousNode = currentNode;
+              } else {
+                for (let i = 1; i <= depth; i++) {
+                  const currentNode = {
+                    depth: i,
+                    content: i === depth ? nodeStr : "",
+                    children: [],
+                    parent: headingTree.previousNode,
+                  };
+                  headingTree.previousNode.children.push(currentNode);
+                  headingTree.previousNode = currentNode;
+                }
+              }
+            } else {
+              let hasFound = false;
+              let nextSearchNode = headingTree.rootNode;
 
-                            searchNode: while (!hasFound) {
-                                if (nextSearchNode.depth + 1 === depth) {
-                                    const currentNode = {
-                                        depth: depth,
-                                        content: nodeStr,
-                                        children: [],
-                                        parent: nextSearchNode,
-                                    };
-                                    nextSearchNode.children.push(currentNode);
-                                    headingTree.previousNode = currentNode;
-                                    hasFound = true;
-                                    break searchNode;
-                                } else {
-                                    if (nextSearchNode.children.length > 0) {
-                                        nextSearchNode =
-                                            nextSearchNode.children[
-                                                nextSearchNode.children.length -
-                                                    1
-                                            ];
-                                        continue searchNode;
-                                    } else {
-                                        const middleNode = {
-                                            depth: nextSearchNode.depth + 1,
-                                            content: "",
-                                            children: [],
-                                            parent: nextSearchNode,
-                                        };
-                                        nextSearchNode.children.push(
-                                            middleNode,
-                                        );
-                                        nextSearchNode = middleNode;
-                                        continue searchNode;
-                                    }
-                                }
-                            }
-                        }
-                    } catch (err) {
-                        throw err;
-                    }
-                },
-            },
-        ],
-        before() {
-            headingTree = undefined;
-            firstHeading = {};
+              searchNode: while (!hasFound) {
+                if (nextSearchNode.depth + 1 === depth) {
+                  const currentNode = {
+                    depth: depth,
+                    content: nodeStr,
+                    children: [],
+                    parent: nextSearchNode,
+                  };
+                  nextSearchNode.children.push(currentNode);
+                  headingTree.previousNode = currentNode;
+                  hasFound = true;
+                  break searchNode;
+                } else {
+                  if (nextSearchNode.children.length > 0) {
+                    nextSearchNode =
+                      nextSearchNode.children[
+                        nextSearchNode.children.length - 1
+                      ];
+                    continue searchNode;
+                  } else {
+                    const middleNode = {
+                      depth: nextSearchNode.depth + 1,
+                      content: "",
+                      children: [],
+                      parent: nextSearchNode,
+                    };
+                    nextSearchNode.children.push(middleNode);
+                    nextSearchNode = middleNode;
+                    continue searchNode;
+                  }
+                }
+              }
+            }
+          } catch (err) {
+            console.log("pretty-toc error: ", err);
+          }
         },
-        after(root, ctx) {
-            if (headingTree !== undefined) {
-                const collectedNodeStr = concatNodeStr(
-                    headingTree.rootNode,
-                    opt,
-                );
-                const baseStyle = `
+      },
+    ],
+    before() {
+      headingTree = undefined;
+      firstHeading = {};
+    },
+    after(root, ctx) {
+      if (headingTree !== undefined) {
+        const collectedNodeStr = concatNodeStr(headingTree.rootNode, opt);
+        const baseStyle = `
           .toc-wrapper {
             display: grid;
             grid-template-rows: 0fr;
@@ -341,7 +330,7 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
           }
         `;
 
-                const iframeContent = `
+        const iframeContent = `
           <iframe
             style="display:none;"
             srcdoc="&lt;!DOCTYPE html&gt;
@@ -394,12 +383,12 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
           </iframe>
         `;
 
-                const totalNodeStr = `
+        const totalNodeStr = `
           <div class="toc-wrapper"><style>${
-              baseStyle +
-              (opt.globalStyle ?? "") +
-              (opt.listStyle === "decimal"
-                  ? `.toc-wrapper ul:has(> li) {
+            baseStyle +
+            (opt.globalStyle ?? "") +
+            (opt.listStyle === "decimal"
+              ? `.toc-wrapper ul:has(> li) {
                   list-style-type: none;
                   counter-reset: toc-counter;
                 }
@@ -409,11 +398,11 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
                 .toc-wrapper .li-marker::before {
                   content: counters(toc-counter, ".");
                 }`
-                  : "") +
-              (opt.animation &&
-              animation !== undefined &&
-              typeof animation !== "boolean"
-                  ? `.toc-wrapper {
+              : "") +
+            (opt.animation &&
+            animation !== undefined &&
+            typeof animation !== "boolean"
+              ? `.toc-wrapper {
                   max-height: 2rem;
                   transition: max-height ${animation.duration} ${animation.timingFunction};
                 }
@@ -421,9 +410,9 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
                   max-height: 100vh;
                 }
                 `
-                  : "") +
-              (opt.titleMarkerType === "icon"
-                  ? `
+              : "") +
+            (opt.titleMarkerType === "icon"
+              ? `
                 .toc-wrapper .toc-title::before {
                   content: '${closedMarker} ';
                   display: contents;
@@ -435,9 +424,9 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
                   font-size: 1rem;
                 }
               `
-                  : "") +
-              (opt.titleMarkerType === "image"
-                  ? `
+              : "") +
+            (opt.titleMarkerType === "image"
+              ? `
                 .toc-wrapper > .toc-title, .toc-wrapper > ul {
                   margin-left: 2rem;
                 }
@@ -462,21 +451,21 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
                   transform: translateY(-50%);
                 }
               `
-                  : "")
+              : "")
           }</style><h2 data-satteri-toc-title="${title}" class="toc-title ${opt.class?.title ?? ""}" style="${opt.style?.title ?? ""}">${title}</h2>${collectedNodeStr}${iframeContent}</div>
         `;
 
-                if (firstHeading.headingIndex !== undefined) {
-                    ctx.replaceNode(root.children[firstHeading.headingIndex], {
-                        type: "raw",
-                        value:
-                            totalNodeStr +
-                            `<h${firstHeading.headingDepth} id="${firstHeading.headingId}">${firstHeading.headingText || ""}</h${firstHeading.headingDepth}>`,
-                    });
-                }
-            }
-        },
-    });
+        if (firstHeading.headingIndex !== undefined) {
+          ctx.replaceNode(root.children[firstHeading.headingIndex], {
+            type: "raw",
+            value:
+              totalNodeStr +
+              `<h${firstHeading.headingDepth} id="${firstHeading.headingId}">${firstHeading.headingText || ""}</h${firstHeading.headingDepth}>`,
+          });
+        }
+      }
+    },
+  });
 }
 
 /**
@@ -486,14 +475,14 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
  * @returns 所有节点的html内容字符串
  */
 function concatNodeStr(node: CUSTOM_NODE, opt: HastOption): string {
-    let childNodeStr = "";
-    if (node.children.length > 0) {
-        for (let i = 0; i < node.children.length; i++) {
-            childNodeStr += concatNodeStr(node.children[i], opt);
-        }
-        childNodeStr = `<ul class="${opt.class?.ul ?? ""}" style="${opt.style?.ul ?? ""}">${childNodeStr}</ul>`;
-        return node.content + childNodeStr;
+  let childNodeStr = "";
+  if (node.children.length > 0) {
+    for (let i = 0; i < node.children.length; i++) {
+      childNodeStr += concatNodeStr(node.children[i], opt);
     }
-    return node.content;
+    childNodeStr = `<ul class="${opt.class?.ul ?? ""}" style="${opt.style?.ul ?? ""}">${childNodeStr}</ul>`;
+    return node.content + childNodeStr;
+  }
+  return node.content;
 }
 export default prettyToc;
