@@ -1,4 +1,5 @@
 [![CodeQL Advanced](https://github.com/Virgil-N/pretty-toc/actions/workflows/codeql.yml/badge.svg)](https://github.com/Virgil-N/pretty-toc/actions/workflows/codeql.yml)
+[![Coverage](https://github.com/Virgil-N/pretty-toc/actions/workflows/coverage.yml/badge.svg)](https://github.com/Virgil-N/pretty-toc/actions/workflows/coverage.yml)
 [![Verify and Release](https://github.com/Virgil-N/pretty-toc/actions/workflows/verify-and-release.yml/badge.svg)](https://github.com/Virgil-N/pretty-toc/actions/workflows/verify-and-release.yml)
 ![GitHub repo size](https://img.shields.io/github/repo-size/Virgil-N/pretty-toc)
 ![NPM Downloads](https://img.shields.io/npm/dm/pretty-toc)
