@@ -104,8 +104,10 @@ processor: satteri({
 }),
 ```
 
-<details id="Screenshots">
-  <summary>Screenshots</summary>
+## Screenshots
+
+<details>
+  <summary>点击展开</summary>
   <ol>
     <li>
       <p>icon</p>
