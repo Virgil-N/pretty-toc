@@ -1,5 +1,4 @@
 [![CodeQL Advanced](https://github.com/Virgil-N/pretty-toc/actions/workflows/codeql.yml/badge.svg)](https://github.com/Virgil-N/pretty-toc/actions/workflows/codeql.yml)
-[![GitHub Advanced Security](https://github.com/Virgil-N/pretty-toc/actions/workflows/agents/github-advanced-security/badge.svg)](https://github.com/Virgil-N/pretty-toc/actions/workflows/agents/github-advanced-security)
 [![Verify and Release](https://github.com/Virgil-N/pretty-toc/actions/workflows/verify-and-release.yml/badge.svg)](https://github.com/Virgil-N/pretty-toc/actions/workflows/verify-and-release.yml)
 ![GitHub repo size](https://img.shields.io/github/repo-size/Virgil-N/pretty-toc)
 ![NPM Downloads](https://img.shields.io/npm/dm/pretty-toc)
@@ -33,23 +32,6 @@ deno add -D pretty-toc
 - [Screenshots](#Screenshots)
 - [Options](#Options)
 - [Contribution](#Contribution)
-
-## Screenshots
-
-- icon
-  ![](https://github.com/Virgil-N/resource/blob/main/image/pretty-toc/with-icon.png)
-
-- image
-  ![](https://github.com/Virgil-N/resource/blob/main/image/pretty-toc/with-image.png)
-
-- dot
-  ![](https://github.com/Virgil-N/resource/blob/main/image/pretty-toc/use-dot.png)
-
-- decimal
-  ![](https://github.com/Virgil-N/resource/blob/main/image/pretty-toc/use-decimal.png)
-
-- nested image
-  ![](https://github.com/Virgil-N/resource/blob/main/image/pretty-toc/use-multiple-image.png)
 
 ## Example
 
