@@ -1,10 +1,12 @@
 [![CodeQL Advanced](https://github.com/Virgil-N/pretty-toc/actions/workflows/codeql.yml/badge.svg)](https://github.com/Virgil-N/pretty-toc/actions/workflows/codeql.yml)
 [![Coverage](https://github.com/Virgil-N/pretty-toc/actions/workflows/coverage.yml/badge.svg)](https://github.com/Virgil-N/pretty-toc/actions/workflows/coverage.yml)
 [![Verify and Release](https://github.com/Virgil-N/pretty-toc/actions/workflows/verify-and-release.yml/badge.svg)](https://github.com/Virgil-N/pretty-toc/actions/workflows/verify-and-release.yml)
+![GitHub License](https://img.shields.io/github/license/Virgil-N/pretty-toc)
 ![GitHub repo size](https://img.shields.io/github/repo-size/Virgil-N/pretty-toc)
+![NPM Unpacked Size](https://img.shields.io/npm/unpacked-size/pretty-toc)
+![NPM Version](https://img.shields.io/npm/v/pretty-toc)
 ![NPM Downloads](https://img.shields.io/npm/dm/pretty-toc)
 ![NPM Downloads](https://img.shields.io/npm/d18m/pretty-toc)
-![GitHub License](https://img.shields.io/github/license/Virgil-N/pretty-toc)
 
 A Table of Contents generation plugin for the Satteri markdown parser library.
 
