@@ -56,9 +56,10 @@
     "@rollup/plugin-url": "^8.0.2",
     "@types/hast": "^3.0.5",
     "@types/node": "^26.4.1",
+    "@vitest/coverage-v8": "^4.1.12",
     "bumpp": "^11.1.0",
     "tsdown": "^0.22.5",
     "typescript": "^7.0.2",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.12"
   }
 }
