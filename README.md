@@ -47,7 +47,7 @@ satteri({
 })
 
 // Full example
-processor: satteri({
+satteri({
   hastPlugins: [
     prettyToc({
       title: "Table of Contents",
@@ -109,7 +109,7 @@ processor: satteri({
 ## Screenshots
 
 <details>
-  <summary>点击展开</summary>
+  <summary>Click to open</summary>
   <ol>
     <li>
       <p>icon</p>
