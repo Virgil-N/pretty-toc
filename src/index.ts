@@ -57,7 +57,7 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
           try {
             const depth = parseInt(node.tagName.slice(-1), 10);
             const content = ctx.textContent(node);
-            const contentSlug = slug(content) + new Date().getTime();
+            const contentSlug = slug(content) + "-" + crypto.randomUUID();
 
             if (opt.languageMap) {
               title =
@@ -339,7 +339,7 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
               &lt;body&gt;
                 <script is:inline data-astro-rerun>
                   const currentLocale = window.parent.location.pathname.split('/')[1] || '${opt.locale || DEFALUT_LOCALE}';
-                  const languageMap = ${JSON.stringify(opt.languageMap).replaceAll('"', "'")} || ${JSON.stringify(DEFAULT_LANGUAGE_MAP).replaceAll('"', "'")};
+                  const languageMap = ${opt.languageMap ? JSON.stringify(opt.languageMap).replaceAll('"', "'") : JSON.stringify(DEFAULT_LANGUAGE_MAP).replaceAll('"', "'")};
 
                   function syncTocTitle(
                     locale,
