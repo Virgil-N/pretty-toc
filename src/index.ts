@@ -101,8 +101,8 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
 
             if (opt.image && typeof opt.image === "string") {
               image = opt.image;
-            } else if (Array.isArray(opt.image)) {
-              image = opt.image[depth - 1] ?? notFoundImg;
+            } else if (Array.isArray(opt.image) && opt.image[depth - 1]) {
+              image = opt.image[depth - 1];
             }
 
             switch (opt.listMarkerType) {
@@ -257,8 +257,8 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
               margin-right: 0.5rem;
             }
             img.li-marker {
-              width: ${listMarkerCssSize};
-              height: ${listMarkerCssSize};
+              width: ${opt.listMarkerType === "image" && opt.image === undefined ? "1.5rem" : listMarkerCssSize};
+              height: ${opt.listMarkerType === "image" && opt.image === undefined ? "1.5rem" : listMarkerCssSize};
               margin: 0 0.5rem 0 0;
             }
             .li-marker::before {
@@ -275,7 +275,7 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
               display: inline-flex;
               flex-direction: row;
               justify-content: flex-start;
-              align-items: baseline;
+              align-items: ${opt.listMarkerType === "image" && opt.image === undefined ? "flex-end" : "baseline"};
             }
             .li-row > img {
               margin: 0 0.5rem 0 0;

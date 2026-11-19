@@ -55,7 +55,7 @@ satteri({
       openedMarker: '🦋',
       closedMarker: '🐢',
       titleMarkerType: 'icon', // icon, image, none
-      titleMarkerCssSize: '1rem',
+      titleMarkerCssSize: '1.2rem',
       listMarkerType: "image", // disc, circle, decimal, none... icon, image...
       icon: ["🐶", "🦁", "🐷", "🐸", "🐥", "🐞"], // or just a string, eg. "🐥"
       image: [
