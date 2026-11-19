@@ -29,13 +29,18 @@ import slug from "slug";
  */
 function prettyToc(option?: HastOption): HastPluginDefinition {
   const opt = option ?? DEFAULT_OPTIONS;
+  const canCollapse = opt.canCollapse === undefined ? true : opt.canCollapse;
   const lightThemeHighlightColor =
     opt.lightThemeHighlightColor || DEFAULT_LIGHT_THEME_HIGHLIGHT_COLOR;
   const darkThemeHighlightColor =
     opt.darkThemeHighlightColor || DEFAULT_DARK_THEME_HIGHLIGHT_COLOR;
   const titleMarkerCssSize = opt.titleMarkerCssSize || DEFAULT_TITLE_FONT_SIZE;
-  const openedMarker = opt.openedMarker || DEFAULT_OPENED_TITLE_MARKER;
-  const closedMarker = opt.closedMarker || DEFAULT_CLOSED_TITLE_MARKER;
+  const openedMarker = canCollapse
+    ? opt.openedMarker || DEFAULT_OPENED_TITLE_MARKER
+    : "";
+  const closedMarker = canCollapse
+    ? opt.closedMarker || DEFAULT_CLOSED_TITLE_MARKER
+    : "";
   const listMarkerCssSize = opt.listMarkerCssSize || DEFAULT_LIST_FONT_SIZE;
 
   let title = opt.title || DEFAULT_TITLE;
@@ -70,7 +75,8 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
             if (
               opt.listMarkerType === "icon" ||
               opt.listMarkerType === "image" ||
-              opt.listMarkerType === "decimal"
+              opt.listMarkerType === "decimal" ||
+              opt.listMarkerType === undefined
             ) {
               listMarkerType = "none";
             } else if (opt.listMarkerType !== undefined) {
@@ -112,6 +118,7 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
                 marker = `<img class='li-marker' src="${image}" alt='icon' />`;
                 break;
               case "decimal":
+              case undefined:
                 marker = "<span class='li-marker'></span>";
                 break;
               default:
@@ -395,7 +402,8 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
           <div class="toc-wrapper"><style>${
             baseStyle +
             (opt.globalStyle ?? "") +
-            (opt.listMarkerType === "decimal"
+            (opt.listMarkerType === "decimal" ||
+            opt.listMarkerType === undefined
               ? `.toc-wrapper ul:has(> li) {
                   list-style-type: none;
                   counter-reset: toc-counter;
@@ -407,17 +415,22 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
                   content: counters(toc-counter, ".");
                 }`
               : "") +
-            (opt.animation &&
-            animation !== undefined &&
-            typeof animation !== "boolean"
+            (canCollapse
               ? `.toc-wrapper {
                   max-height: 2rem;
-                  transition: max-height ${animation.duration} ${animation.timingFunction};
                 }
                 .toc-wrapper:has(.toc-title.open) {
                   max-height: 100vh;
                 }
                 `
+              : "") +
+            (opt.animation &&
+            animation !== undefined &&
+            typeof animation !== "boolean" &&
+            canCollapse
+              ? `.toc-wrapper {
+                  transition: max-height ${animation.duration} ${animation.timingFunction};
+                }`
               : "") +
             (opt.titleMarkerType !== "image"
               ? `

@@ -8,6 +8,8 @@ export interface tagHasProperty {
 export interface HastOption {
   /** TOC标题 */
   title?: string;
+  /** 能否点击折叠和展开 */
+  canCollapse?: boolean;
   /** 展开时的标记 */
   openedMarker?: string;
   /** 关闭时的标记 */

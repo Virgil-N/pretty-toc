@@ -31,6 +31,7 @@ export const DEFAULT_LANGUAGE_MAP: Record<string, string> = {
 
 export const DEFAULT_OPTIONS: HastOption = {
   title: DEFAULT_TITLE,
+  canCollapse: true,
   listMarkerType: DEFAULT_LIST_MARKER_TYPE, // disc, circle, decimal, none...
   titleMarkerType: DEFAULT_TITLE_MARKER_TYPE,
   titleMarkerCssSize: DEFAULT_TITLE_FONT_SIZE,
