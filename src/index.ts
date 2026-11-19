@@ -20,7 +20,6 @@ import type {
   NODE_TREE,
 } from "../basic";
 import notFoundImg from "./assets/svg/image-not-found.svg";
-import slug from "slug";
 
 /**
  *
@@ -61,7 +60,7 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
           try {
             const depth = parseInt(node.tagName.slice(-1), 10);
             const content = ctx.textContent(node);
-            const contentSlug = slug(content) + "-" + crypto.randomUUID();
+            const contentId = crypto.randomUUID();
 
             if (opt.languageMap) {
               title =
@@ -125,14 +124,14 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
                 marker = "";
             }
 
-            let nodeStr = `<li id="li-${contentSlug}" class="${opt.class?.li ?? ""}" style="${opt.style?.li ?? ""}" data-depth=${depth}><div class="li-row">${marker}<a href="#${contentSlug}" class="${opt.class?.a ?? ""}" style="${opt.style?.a ?? ""}">${content}</a></div></li>`;
+            let nodeStr = `<li id="li-${contentId}" class="${opt.class?.li ?? ""}" style="${opt.style?.li ?? ""}" data-depth=${depth}><div class="li-row">${marker}<a href="#${contentId}" class="${opt.class?.a ?? ""}" style="${opt.style?.a ?? ""}">${content}</a></div></li>`;
 
-            ctx.setProperty(node, "id", contentSlug);
+            ctx.setProperty(node, "id", contentId);
 
             if (headingTree === undefined) {
               firstHeading.headingText = ctx.textContent(node);
               firstHeading.headingDepth = depth;
-              firstHeading.headingId = contentSlug;
+              firstHeading.headingId = contentId;
               firstHeading.headingIndex = ctx.indexOf(node) ?? 0;
 
               const rootNode: CUSTOM_NODE = {
