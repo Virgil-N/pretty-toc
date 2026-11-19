@@ -2,16 +2,16 @@ import { defineHastPlugin, type HastPluginDefinition } from "satteri";
 import {
   DEFAULT_OPTIONS,
   DEFAULT_TITLE,
+  DEFAULT_LIST_MARKER_TYPE,
   DEFAULT_OPENED_TITLE_MARKER,
   DEFAULT_CLOSED_TITLE_MARKER,
-  DEFAULT_TITLE_MARKER_CSS_SIZE,
-  DEFAULT_LI_MARKER_CSS_SIZE,
+  DEFAULT_TITLE_FONT_SIZE,
+  DEFAULT_LIST_FONT_SIZE,
   DEFALUT_LOCALE,
   DEFAULT_ANIMATION,
   DEFAULT_LIGHT_THEME_HIGHLIGHT_COLOR,
   DEFAULT_DARK_THEME_HIGHLIGHT_COLOR,
   DEFAULT_LANGUAGE_MAP,
-  DEFAULT_LIST_STYLE,
 } from "./const";
 import type {
   HastOption,
@@ -33,14 +33,13 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
     opt.lightThemeHighlightColor || DEFAULT_LIGHT_THEME_HIGHLIGHT_COLOR;
   const darkThemeHighlightColor =
     opt.darkThemeHighlightColor || DEFAULT_DARK_THEME_HIGHLIGHT_COLOR;
-  const titleMarkerCssSize =
-    opt.titleMarkerCssSize || DEFAULT_TITLE_MARKER_CSS_SIZE;
+  const titleMarkerCssSize = opt.titleMarkerCssSize || DEFAULT_TITLE_FONT_SIZE;
   const openedMarker = opt.openedMarker || DEFAULT_OPENED_TITLE_MARKER;
   const closedMarker = opt.closedMarker || DEFAULT_CLOSED_TITLE_MARKER;
-  const liMarkerCssSize = opt.liMarkerCssSize || DEFAULT_LI_MARKER_CSS_SIZE;
+  const listMarkerCssSize = opt.listMarkerCssSize || DEFAULT_LIST_FONT_SIZE;
 
   let title = opt.title || DEFAULT_TITLE;
-  let listStyle = DEFAULT_LIST_STYLE;
+  let listMarkerType = DEFAULT_LIST_MARKER_TYPE;
   let animation:
     boolean | { duration: string; timingFunction: string } | undefined =
     undefined;
@@ -69,13 +68,13 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
             }
 
             if (
-              opt.listStyle === "icon" ||
-              opt.listStyle === "image" ||
-              opt.listStyle === "decimal"
+              opt.listMarkerType === "icon" ||
+              opt.listMarkerType === "image" ||
+              opt.listMarkerType === "decimal"
             ) {
-              listStyle = "none";
-            } else if (opt.listStyle !== undefined) {
-              listStyle = opt.listStyle;
+              listMarkerType = "none";
+            } else if (opt.listMarkerType !== undefined) {
+              listMarkerType = opt.listMarkerType;
             }
 
             if (
@@ -105,7 +104,7 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
               image = opt.image[depth - 1] ?? notFoundImg;
             }
 
-            switch (opt.listStyle) {
+            switch (opt.listMarkerType) {
               case "icon":
                 marker = `<span class='li-marker'>${icon}</span>`;
                 break;
@@ -220,15 +219,24 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
               grid-template-rows: 1fr;
             }
             .toc-title {
-              font-size: 1.2rem;
+              font-size: ${titleMarkerCssSize};
               font-weight: 600;
-              margin: 0 0 0.5rem 0;
+              margin: 0;
               width: fit-content;
               position: relative;
+              display: inline-flex;
+              flex-direction: row;
+              justify-content: flex-start;
+              align-items: flex-end;
+            }
+            .title-marker {
+              display: inline-flex;
+              height: 100%;
+              align-items: center;
             }
             ul {
               padding-left: var(--list-indent, 1.5rem);
-              list-style-type: ${listStyle} ;
+              list-style-type: ${listMarkerType} ;
               list-style-position: inside;
             }
             ul:not(:has(> li)) {
@@ -241,7 +249,7 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
             li {
               padding: 0;
               line-height: 1.5rem;
-              font-size: 1rem;
+              font-size: ${listMarkerCssSize};
               animation: fadeIn 0.01s ease-in; // 防止页面刷新瞬间显示"0 javascript"
             }
             .li-marker {
@@ -249,15 +257,15 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
               margin-right: 0.5rem;
             }
             img.li-marker {
-              width: ${liMarkerCssSize};
-              height: ${liMarkerCssSize};
+              width: ${listMarkerCssSize};
+              height: ${listMarkerCssSize};
               margin: 0 0.5rem 0 0;
             }
             .li-marker::before {
-              font-size: 1rem;
+              font-size: ${listMarkerCssSize};
               font-weight: 600;
-              width: ${liMarkerCssSize};
-              height: ${liMarkerCssSize};
+              width: ${listMarkerCssSize};
+              height: ${listMarkerCssSize};
             }
             /* 嵌套的 ul 内部，让缩进变量自动叠加 1rem */
             ul ul {
@@ -267,7 +275,7 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
               display: inline-flex;
               flex-direction: row;
               justify-content: flex-start;
-              align-items: center;
+              align-items: baseline;
             }
             .li-row > img {
               margin: 0 0.5rem 0 0;
@@ -356,10 +364,10 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
                   }
 
                   function toggleToc() {
-                    const tocTitle = window.parent.document.querySelector('.toc-title');
+                    const tocTitle = window.parent.document.querySelector('[data-satteri-toc-title]');
                     if (tocTitle) {
                       tocTitle.addEventListener('click', function () {
-                        tocTitle.classList.toggle('open');
+                        tocTitle.parentElement.classList.toggle('open');
                       })
                     }
                   }
@@ -387,7 +395,7 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
           <div class="toc-wrapper"><style>${
             baseStyle +
             (opt.globalStyle ?? "") +
-            (opt.listStyle === "decimal"
+            (opt.listMarkerType === "decimal"
               ? `.toc-wrapper ul:has(> li) {
                   list-style-type: none;
                   counter-reset: toc-counter;
@@ -411,48 +419,52 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
                 }
                 `
               : "") +
-            (opt.titleMarkerType === "icon"
+            (opt.titleMarkerType !== "image"
               ? `
-                .toc-wrapper .toc-title::before {
-                  content: '${closedMarker} ';
-                  display: contents;
-                  font-size: 1.2rem;
+                .toc-wrapper .title-marker + span, .toc-wrapper > ul {
+                  margin-left: 0.5rem;
                 }
-                .toc-wrapper .toc-title.open::before {
+                .toc-wrapper .toc-title .title-marker::before {
+                  content: '${closedMarker} ';
+                  display: inline-block;
+                  font-size: ${titleMarkerCssSize};
+                  vertical-align: bottom;
+
+                }
+                .toc-wrapper .toc-title.open .title-marker::before {
                   content: '${openedMarker} ';
-                  display: contents;
-                  font-size: 1.2rem;
+                  display: inline-block;
+                  font-size: ${titleMarkerCssSize};
+                  vertical-align: bottom;
                 }
               `
               : "") +
             (opt.titleMarkerType === "image"
               ? `
-                .toc-wrapper > .toc-title, .toc-wrapper > ul {
-                  margin-left: 2rem;
+                .toc-wrapper .title-marker {
+                  display: inline-block;
                 }
-                .toc-wrapper .toc-title::before {
+                .toc-wrapper .title-marker::before {
                   content: "";
                   background: url('${closedMarker}') center / contain no-repeat;
                   width: ${titleMarkerCssSize};
-                  height: ${titleMarkerCssSize};
-                  position: absolute;
-                  left: -2rem;
-                  top: 50%;
-                  transform: translateY(-50%);
+                  height: 100%;
+                  display: inline-block;
+                  margin-right: 0.3rem;
+                  vertical-align: text-bottom;
                 }
-                .toc-wrapper .toc-title.open::before {
+                .toc-wrapper .toc-title.open .title-marker::before {
                   content: "";
                   background: url('${openedMarker}') center / contain no-repeat;
                   width: ${titleMarkerCssSize};
-                  height: ${titleMarkerCssSize};
-                  position: absolute;
-                  left: -2rem;
-                  top: 50%;
-                  transform: translateY(-50%);
+                  height: 100%;
+                  display: inline-block;
+                  margin-right: 0.3rem;
+                  vertical-align: text-bottom;
                 }
               `
               : "")
-          }</style><h2 data-satteri-toc-title="${title}" class="toc-title ${opt.class?.title ?? ""}" style="${opt.style?.title ?? ""}">${title}</h2>${collectedNodeStr}${iframeContent}</div>
+          }</style><h2 class="toc-title ${opt.class?.title ?? ""}" style="${opt.style?.title ?? ""}"><span class="title-marker"></span><span data-satteri-toc-title="${title}">${title}</span></h2>${collectedNodeStr}${iframeContent}</div>
         `;
 
         if (firstHeading.headingIndex !== undefined) {

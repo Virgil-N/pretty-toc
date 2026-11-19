@@ -17,19 +17,19 @@ export interface HastOption {
   /** TOC标题标记大小 */
   titleMarkerCssSize?: string;
   /** 列表形式 */
-  listStyle?: string;
+  listMarkerType?: string;
   /** 图标 */
   icon?: string | string[];
   /** 图片路径 */
   image?: string | string[];
   /** 列表项标记大小 */
-  liMarkerCssSize?: string;
+  listMarkerCssSize?: string;
   /** 浅色主题高亮颜色 */
   lightThemeHighlightColor?: string;
   /** 深色主题高亮颜色 */
   darkThemeHighlightColor?: string;
   /** 动画 */
-  animation?: boolean | { duration: string, timingFunction: string };
+  animation?: boolean | { duration: string; timingFunction: string };
   /** 类名 */
   class?: tagHasProperty;
   /** 全局样式 */
