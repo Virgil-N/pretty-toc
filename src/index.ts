@@ -34,12 +34,8 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
   const darkThemeHighlightColor =
     opt.darkThemeHighlightColor || DEFAULT_DARK_THEME_HIGHLIGHT_COLOR;
   const titleMarkerCssSize = opt.titleMarkerCssSize || DEFAULT_TITLE_FONT_SIZE;
-  const openedMarker = canCollapse
-    ? opt.openedMarker || DEFAULT_OPENED_TITLE_MARKER
-    : "";
-  const closedMarker = canCollapse
-    ? opt.closedMarker || DEFAULT_CLOSED_TITLE_MARKER
-    : "";
+  const openedMarker = opt.openedMarker || DEFAULT_OPENED_TITLE_MARKER;
+  const closedMarker = opt.closedMarker || DEFAULT_CLOSED_TITLE_MARKER;
   const listMarkerCssSize = opt.listMarkerCssSize || DEFAULT_LIST_FONT_SIZE;
 
   let title = opt.title || DEFAULT_TITLE;
@@ -236,9 +232,7 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
               align-items: flex-end;
             }
             .title-marker {
-              display: inline-flex;
-              height: 100%;
-              align-items: center;
+              position: absolute;
             }
             ul {
               padding-left: var(--list-indent, 1.5rem);
@@ -291,56 +285,38 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
             }
           }
           @media (hover: hover) {
-            .toc-wrapper .toc-title:hover {
+            .toc-wrapper {
+              .toc-title:hover, .li-row:hover, .li-row:hover > .li-marker::before, .li-row:hover > a {
+                color: ${lightThemeHighlightColor};
+              }
+              .toc-title:hover {
+                cursor: pointer;
+              }
+            }
+            html.dark .toc-wrapper {
+              .toc-title:hover, .li-row:hover, .li-row:hover > .li-marker::before, .li-row:hover > a {
+                color: ${darkThemeHighlightColor};
+              }
+              .toc-title:hover {
+                cursor: pointer;
+              }
+            }
+          }
+          .toc-wrapper {
+            .toc-title:active, .li-row:active, .li-row:active > .li-marker::before, .li-row:active > a {
               color: ${lightThemeHighlightColor};
+            }
+            .toc-title:active {
               cursor: pointer;
             }
-            html.dark .toc-wrapper .toc-title:hover {
+          }
+          html.dark .toc-wrapper {
+            .toc-title:active, .li-row:active, .li-row:active > .li-marker::before, .li-row:active > a {
               color: ${darkThemeHighlightColor};
             }
-            .toc-wrapper .li-row:hover {
-              color: ${lightThemeHighlightColor};
+            .toc-title:active {
+              cursor: pointer;
             }
-            .toc-wrapper .li-row:hover > .li-marker::before {
-              color: ${lightThemeHighlightColor};
-            }
-            .toc-wrapper .li-row:hover > a {
-              color: ${lightThemeHighlightColor};
-            }
-            html.dark .toc-wrapper .li-row:hover {
-              color: ${darkThemeHighlightColor};
-            }
-            html.dark .toc-wrapper .li-row:hover > .li-marker::before {
-              color: ${darkThemeHighlightColor};
-            }
-            html.dark .toc-wrapper .li-row:hover > a {
-              color: ${darkThemeHighlightColor};
-            }
-          }
-          .toc-wrapper .toc-title:active {
-            color: ${lightThemeHighlightColor};
-            cursor: pointer;
-          }
-          html.dark .toc-wrapper .toc-title:active {
-            color: ${darkThemeHighlightColor};
-          }
-          .toc-wrapper .li-row:active {
-            color: ${lightThemeHighlightColor};
-          }
-          .toc-wrapper .li-row:active > .li-marker::before {
-            color: ${lightThemeHighlightColor};
-          }
-          .toc-wrapper .li-row:active > a {
-            color: ${lightThemeHighlightColor};
-          }
-          html.dark .toc-wrapper .li-row:active {
-            color: ${darkThemeHighlightColor};
-          }
-          html.dark .toc-wrapper .li-row:active > .li-marker::before {
-            color: ${darkThemeHighlightColor};
-          }
-          html.dark .toc-wrapper .li-row:active > a {
-            color: ${darkThemeHighlightColor};
           }
         `;
 
@@ -360,7 +336,6 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
                     languageMap
                   ) {
                     const tocSummary = window.parent.document.querySelector('[data-satteri-toc-title]');
-
                     if (tocSummary) {
                       const titleKey = tocSummary.getAttribute('data-satteri-toc-title');
                       const translation =
@@ -371,9 +346,15 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
 
                   function toggleToc() {
                     const tocTitle = window.parent.document.querySelector('[data-satteri-toc-title]');
+                    const titleMarker = tocTitle.previousSibling;
                     if (tocTitle) {
                       tocTitle.addEventListener('click', function () {
-                        tocTitle.parentElement.classList.toggle('open');
+                        if (${canCollapse}) {
+                          tocTitle.parentElement.classList.toggle('open');
+                          if (titleMarker && ${opt.titleMarkerType !== "image" && opt.titleMarkerType !== "none"}) {
+                            titleMarker.textContent = tocTitle.parentElement.classList.contains('open') ? '${openedMarker}' : '${closedMarker}';
+                          }
+                        }
                       })
                     }
                   }
@@ -394,8 +375,7 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
                 </script>
               &lt;/body&gt;
             &lt;/html&gt;">
-          </iframe>
-        `;
+          </iframe>`;
 
         const totalNodeStr = `
           <div class="toc-wrapper"><style>${
@@ -414,15 +394,6 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
                   content: counters(toc-counter, ".");
                 }`
               : "") +
-            (canCollapse
-              ? `.toc-wrapper {
-                  max-height: 2rem;
-                }
-                .toc-wrapper:has(.toc-title.open) {
-                  max-height: 100vh;
-                }
-                `
-              : "") +
             (opt.animation &&
             animation !== undefined &&
             typeof animation !== "boolean" &&
@@ -431,52 +402,48 @@ function prettyToc(option?: HastOption): HastPluginDefinition {
                   transition: max-height ${animation.duration} ${animation.timingFunction};
                 }`
               : "") +
-            (opt.titleMarkerType !== "image"
+            (opt.titleMarkerType !== "image" && opt.titleMarkerType !== "none"
               ? `
-                .toc-wrapper .title-marker + span, .toc-wrapper > ul {
+                .toc-wrapper .title-marker + span {
+                  margin-left: 2rem;
+                }
+                .toc-wrapper > ul {
                   margin-left: 0.5rem;
-                }
-                .toc-wrapper .toc-title .title-marker::before {
-                  content: '${closedMarker} ';
-                  display: inline-block;
-                  font-size: ${titleMarkerCssSize};
-                  vertical-align: bottom;
-
-                }
-                .toc-wrapper .toc-title.open .title-marker::before {
-                  content: '${openedMarker} ';
-                  display: inline-block;
-                  font-size: ${titleMarkerCssSize};
-                  vertical-align: bottom;
-                }
-              `
+                }`
+              : "") +
+            (opt.titleMarkerType === "none"
+              ? `
+                .toc-wrapper > ul {
+                  padding-left: 0;
+                }`
               : "") +
             (opt.titleMarkerType === "image"
               ? `
-                .toc-wrapper .title-marker {
-                  display: inline-block;
+                .toc-wrapper .title-marker + span {
+                  margin-left: 1.5rem;
                 }
                 .toc-wrapper .title-marker::before {
                   content: "";
                   background: url('${closedMarker}') center / contain no-repeat;
                   width: ${titleMarkerCssSize};
                   height: 100%;
-                  display: inline-block;
+                  display: list-item;
                   margin-right: 0.3rem;
                   vertical-align: text-bottom;
                 }
                 .toc-wrapper .toc-title.open .title-marker::before {
-                  content: "";
                   background: url('${openedMarker}') center / contain no-repeat;
-                  width: ${titleMarkerCssSize};
-                  height: 100%;
-                  display: inline-block;
-                  margin-right: 0.3rem;
-                  vertical-align: text-bottom;
+                }`
+              : "") +
+            (canCollapse
+              ? `.toc-wrapper {
+                  max-height: 2rem;
                 }
-              `
+                .toc-wrapper:has(.toc-title.open) {
+                  max-height: 100vh;
+                }`
               : "")
-          }</style><h2 class="toc-title ${opt.class?.title ?? ""}" style="${opt.style?.title ?? ""}"><span class="title-marker"></span><span data-satteri-toc-title="${title}">${title}</span></h2>${collectedNodeStr}${iframeContent}</div>
+          }</style><h2 class="toc-title ${opt.class?.title ?? ""}" style="${opt.style?.title ?? ""}"><span class="title-marker">${opt.titleMarkerType !== "image" && opt.titleMarkerType !== "none" ? closedMarker : ""}</span><span data-satteri-toc-title="${title}">${title}</span></h2>${collectedNodeStr}${iframeContent}</div>
         `;
 
         if (firstHeading.headingIndex !== undefined) {
